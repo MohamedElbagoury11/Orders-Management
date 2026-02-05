@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../../domain/entities/client.dart';
 import '../../../domain/entities/order.dart';
+import '../../../domain/usecases/auth_usecases.dart';
 import '../../../domain/usecases/client_usecases.dart';
 import '../../../domain/usecases/order_usecases.dart';
 
@@ -43,7 +46,14 @@ class CreateOrder extends OrderEvent {
   });
 
   @override
-  List<Object?> get props => [vendorId, vendorName, vendorPhone, clients, charge, orderDate];
+  List<Object?> get props => [
+    vendorId,
+    vendorName,
+    vendorPhone,
+    clients,
+    charge,
+    orderDate,
+  ];
 }
 
 class UpdateOrder extends OrderEvent {
@@ -66,7 +76,15 @@ class UpdateOrder extends OrderEvent {
   });
 
   @override
-  List<Object?> get props => [id, vendorName, vendorPhone, clients, charge, status, orderDate];
+  List<Object?> get props => [
+    id,
+    vendorName,
+    vendorPhone,
+    clients,
+    charge,
+    status,
+    orderDate,
+  ];
 }
 
 class UpdateClientReceived extends OrderEvent {
@@ -181,6 +199,8 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final DeleteOrderUseCase deleteOrder;
   final DeleteCompletedOrdersUseCase deleteCompletedOrders;
   final DeleteClientsByNameAndPhoneUseCase deleteClientsByNameAndPhone;
+  final GetCurrentUserUseCase getCurrentUser;
+  final IncrementUserOrderCountUseCase incrementUserOrderCount;
 
   OrderBloc({
     required this.getOrders,
@@ -193,6 +213,8 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     required this.deleteOrder,
     required this.deleteCompletedOrders,
     required this.deleteClientsByNameAndPhone,
+    required this.getCurrentUser,
+    required this.incrementUserOrderCount,
   }) : super(OrderInitial()) {
     on<LoadOrders>(_onLoadOrders);
     on<LoadOrdersByStatus>(_onLoadOrdersByStatus);
@@ -215,7 +237,10 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     }
   }
 
-  Future<void> _onLoadOrdersByStatus(LoadOrdersByStatus event, Emitter<OrderState> emit) async {
+  Future<void> _onLoadOrdersByStatus(
+    LoadOrdersByStatus event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
       final orders = await getOrdersByStatus(event.status);
@@ -225,9 +250,46 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     }
   }
 
-  Future<void> _onCreateOrder(CreateOrder event, Emitter<OrderState> emit) async {
+  Future<void> _onCreateOrder(
+    CreateOrder event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
+      // Check subscription limits at device level
+      final currentUser = await getCurrentUser();
+      if (currentUser != null && currentUser.subscriptionType == 'free') {
+        final deviceId = currentUser.deviceId;
+
+        if (deviceId != null &&
+            deviceId.isNotEmpty &&
+            deviceId != 'unknown-device') {
+          // Get the latest device order count from free_plan_devices collection
+          final deviceQuery =
+              await firestore.FirebaseFirestore.instance
+                  .collection('free_plan_devices')
+                  .where('deviceId', isEqualTo: deviceId)
+                  .limit(1)
+                  .get();
+
+          if (deviceQuery.docs.isNotEmpty) {
+            final deviceOrderCount =
+                deviceQuery.docs.first.data()['orderCount'] as int? ?? 0;
+
+            if (deviceOrderCount >= 5) {
+              emit(OrderError(AppStrings.freePlanLimitReached));
+              return;
+            }
+          }
+        } else {
+          // Fallback to user order count if no device ID
+          if (currentUser.orderCount >= 5) {
+            emit(OrderError(AppStrings.freePlanLimitReached));
+            return;
+          }
+        }
+      }
+
       final order = await createOrder(
         vendorId: event.vendorId,
         vendorName: event.vendorName,
@@ -236,15 +298,24 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         charge: event.charge,
         orderDate: event.orderDate,
       );
+
+      // Increment user order count
+      if (currentUser != null) {
+        await incrementUserOrderCount(currentUser.id);
+      }
+
       emit(OrderCreated(order));
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
 
-  Future<void> _onUpdateOrder(UpdateOrder event, Emitter<OrderState> emit) async {
+  Future<void> _onUpdateOrder(
+    UpdateOrder event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
       final order = await updateOrder(
@@ -257,29 +328,37 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         orderDate: event.orderDate,
       );
       emit(OrderUpdated(order));
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
 
-  Future<void> _onUpdateClientReceived(UpdateClientReceived event, Emitter<OrderState> emit) async {
+  Future<void> _onUpdateClientReceived(
+    UpdateClientReceived event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
-      await updateClientReceived(
+      final updatedOrder = await updateClientReceived(
         event.orderId,
         event.clientId,
         event.isReceived,
       );
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+
+      emit(OrderUpdated(updatedOrder));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
 
-  Future<void> _onUploadImagesForClient(UploadImagesForClient event, Emitter<OrderState> emit) async {
+  Future<void> _onUploadImagesForClient(
+    UploadImagesForClient event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
       await uploadImagesForClient(
@@ -287,54 +366,65 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         event.clientId,
         event.imageUrls,
       );
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
 
-  Future<void> _onDeleteOrder(DeleteOrder event, Emitter<OrderState> emit) async {
+  Future<void> _onDeleteOrder(
+    DeleteOrder event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
       await deleteOrder(event.id);
       emit(OrderDeleted());
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
 
-  Future<void> _onDeleteCompletedOrders(DeleteCompletedOrders event, Emitter<OrderState> emit) async {
+  Future<void> _onDeleteCompletedOrders(
+    DeleteCompletedOrders event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
       await deleteCompletedOrders();
       emit(OrderDeleted());
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
 
-  Future<void> _onDeleteCompletedClients(DeleteCompletedClients event, Emitter<OrderState> emit) async {
+  Future<void> _onDeleteCompletedClients(
+    DeleteCompletedClients event,
+    Emitter<OrderState> emit,
+  ) async {
     emit(OrderLoading());
     try {
       // Delete clients from the clients collection only, not from orders
       // Orders should remain intact with their client information
-      final clientsToDelete = event.clientsToDelete.map((client) => {
-        'name': client.name,
-        'phone': client.phoneNumber,
-      }).toList();
-      
+      final clientsToDelete =
+          event.clientsToDelete
+              .map(
+                (client) => {'name': client.name, 'phone': client.phoneNumber},
+              )
+              .toList();
+
       await deleteClientsByNameAndPhone(clientsToDelete);
-      
+
       emit(OrderDeleted());
-      final orders = await getOrders();
-      emit(OrdersLoaded(orders));
+      // Reload to get latest data
+      add(LoadOrders());
     } catch (e) {
       emit(OrderError(e.toString()));
     }
   }
-} 
+}

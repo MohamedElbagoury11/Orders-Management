@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum OrderStatus {
-  pending,
-  working,
-  complete,
-}
+enum OrderStatus { pending, working, complete }
 
 class Order extends Equatable {
   final String id;
@@ -33,27 +29,30 @@ class Order extends Equatable {
     required this.userId,
   });
 
-  double get totalPurchasePrice => clients.fold(0, (sum, client) => sum + client.purchasePrice);
-  double get totalSalesPrice => clients.fold(0, (sum, client) => sum + client.salePrice);
+  double get totalPurchasePrice =>
+      clients.fold(0, (sum, client) => sum + client.purchasePrice);
+  double get totalSalesPrice =>
+      clients.fold(0, (sum, client) => sum + client.salePrice);
   double get netProfit => totalSalesPrice - totalPurchasePrice - charge;
-  
+
   bool get allClientsReceived => clients.every((client) => client.isReceived);
-  int get receivedClientsCount => clients.where((client) => client.isReceived).length;
+  int get receivedClientsCount =>
+      clients.where((client) => client.isReceived).length;
 
   @override
   List<Object?> get props => [
-        id,
-        vendorId,
-        vendorName,
-        vendorPhone,
-        clients,
-        charge,
-        status,
-        orderDate,
-        createdAt,
-        updatedAt,
-        userId,
-      ];
+    id,
+    vendorId,
+    vendorName,
+    vendorPhone,
+    clients,
+    charge,
+    status,
+    orderDate,
+    createdAt,
+    updatedAt,
+    userId,
+  ];
 }
 
 class OrderClient extends Equatable {
@@ -93,7 +92,8 @@ class OrderClient extends Equatable {
     double? salePrice,
     bool? isReceived,
     DateTime? createdAt,
-    List<String>? images, // Add images parameter
+    List<String>? images,
+    double? deposit,
   }) {
     return OrderClient(
       id: id ?? this.id,
@@ -105,22 +105,23 @@ class OrderClient extends Equatable {
       salePrice: salePrice ?? this.salePrice,
       isReceived: isReceived ?? this.isReceived,
       createdAt: createdAt ?? this.createdAt,
-      images: images ?? this.images, // Add images
+      images: images ?? this.images,
       deposit: deposit ?? this.deposit,
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        phoneNumber,
-        address,
-        piecesNumber,
-        purchasePrice,
-        salePrice,
-        isReceived,
-        createdAt,
-        images, // Add images to props
-      ];
-} 
+    id,
+    name,
+    phoneNumber,
+    address,
+    piecesNumber,
+    purchasePrice,
+    salePrice,
+    isReceived,
+    createdAt,
+    images,
+    deposit,
+  ];
+}

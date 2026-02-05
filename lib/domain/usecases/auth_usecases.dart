@@ -17,7 +17,11 @@ class SignUpWithEmailAndPasswordUseCase {
   SignUpWithEmailAndPasswordUseCase(this._authRepository);
 
   Future<User?> call(String email, String password, String name) async {
-    return await _authRepository.signUpWithEmailAndPassword(email, password, name);
+    return await _authRepository.signUpWithEmailAndPassword(
+      email,
+      password,
+      name,
+    );
   }
 }
 
@@ -69,4 +73,14 @@ class SaveUserToFirestoreUseCase {
   Future<void> call(User user) async {
     await _authRepository.saveUserToFirestore(user);
   }
-} 
+}
+
+class IncrementUserOrderCountUseCase {
+  final AuthRepository _authRepository;
+
+  IncrementUserOrderCountUseCase(this._authRepository);
+
+  Future<void> call(String userId) async {
+    await _authRepository.incrementUserOrderCount(userId);
+  }
+}

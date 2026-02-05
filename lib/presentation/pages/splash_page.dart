@@ -96,16 +96,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // App Icon
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: AppThemeHelper.getPrimaryGradientDecoration(context),
-                        child: const Icon(
-                          Icons.shopping_cart_checkout,
-                          color: Colors.white,
-                          size: 60,
-                        ),
-                      ),
+                      Center(
+                    child: Image.asset(
+                      'assets/icon/icon.png',
+                      height: MediaQuery.of(context).size.height * 0.2,
+                    ),
+                  ),
                       
                       const SizedBox(height: AppThemeHelper.standardSpacing),
                       

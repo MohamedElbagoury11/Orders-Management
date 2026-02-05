@@ -18,12 +18,19 @@ class OrderModel extends Order {
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
       id: json['id'] as String,
-      vendorId: json['vendorId'] as String? ?? '', // Handle existing orders without vendorId
+      vendorId:
+          json['vendorId'] as String? ??
+          '', // Handle existing orders without vendorId
       vendorName: json['vendorName'] as String,
       vendorPhone: json['vendorPhone'] as String,
-      clients: (json['clients'] as List<dynamic>)
-          .map((clientJson) => OrderClientModel.fromJson(clientJson as Map<String, dynamic>))
-          .toList(),
+      clients:
+          (json['clients'] as List<dynamic>)
+              .map(
+                (clientJson) => OrderClientModel.fromJson(
+                  clientJson as Map<String, dynamic>,
+                ),
+              )
+              .toList(),
       charge: (json['charge'] as num).toDouble(),
       status: OrderStatus.values.firstWhere(
         (status) => status.toString().split('.').last == json['status'],
@@ -42,7 +49,10 @@ class OrderModel extends Order {
       'vendorId': vendorId,
       'vendorName': vendorName,
       'vendorPhone': vendorPhone,
-      'clients': clients.map((client) => (client as OrderClientModel).toJson()).toList(),
+      'clients':
+          clients
+              .map((client) => (client as OrderClientModel).toJson())
+              .toList(),
       'charge': charge,
       'status': status.toString().split('.').last,
       'orderDate': orderDate.toIso8601String(),
@@ -66,7 +76,6 @@ class OrderClientModel extends OrderClient {
     required super.createdAt,
     required super.deposit,
     super.images = const [], // Add images parameter
-
   });
 
   factory OrderClientModel.fromJson(Map<String, dynamic> json) {
@@ -80,8 +89,10 @@ class OrderClientModel extends OrderClient {
       salePrice: (json['salePrice'] as num).toDouble(),
       isReceived: json['isReceived'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      images: (json['images'] as List<dynamic>?)?.cast<String>() ?? const [], 
-      deposit: (json['deposit'] as num?)?.toDouble() ?? 0.0, // Handle deposit with default value
+      images: (json['images'] as List<dynamic>?)?.cast<String>() ?? const [],
+      deposit:
+          (json['deposit'] as num?)?.toDouble() ??
+          0.0, // Handle deposit with default value
     );
   }
 
@@ -100,4 +111,32 @@ class OrderClientModel extends OrderClient {
       'deposit': deposit,
     };
   }
-} 
+
+  OrderClientModel copyWith({
+    String? id,
+    String? name,
+    String? phoneNumber,
+    String? address,
+    int? piecesNumber,
+    double? purchasePrice,
+    double? salePrice,
+    bool? isReceived,
+    DateTime? createdAt,
+    List<String>? images,
+    double? deposit,
+  }) {
+    return OrderClientModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      address: address ?? this.address,
+      piecesNumber: piecesNumber ?? this.piecesNumber,
+      purchasePrice: purchasePrice ?? this.purchasePrice,
+      salePrice: salePrice ?? this.salePrice,
+      isReceived: isReceived ?? this.isReceived,
+      createdAt: createdAt ?? this.createdAt,
+      images: images ?? this.images,
+      deposit: deposit ?? this.deposit,
+    );
+  }
+}

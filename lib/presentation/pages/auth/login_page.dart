@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectmange/main.dart';
+import 'package:projectmange/presentation/pages/home_page.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/error_messages.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../widgets/custom_error_dialog.dart';
-import '../home_page.dart';
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -252,25 +252,11 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 40),
                   // Logo
                   Center(
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.shopping_bag,
-                        size: 50,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
+                    child: Image.asset(
+                      fit: BoxFit.cover,
+                      'assets/icon/icon.png',
+                      height: MediaQuery.of(context).size.height * 0.25,
+                      width: double.infinity,
                     ),
                   ),
                   const SizedBox(height: 30),

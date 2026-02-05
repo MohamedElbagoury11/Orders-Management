@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/order.dart';
@@ -13,7 +12,9 @@ import '../models/vendor_model.dart';
 abstract class FirestoreDataSource {
   // Users
   Future<void> createUser(User user);
-  
+  Future<UserModel?> getUser(String id);
+  Future<void> incrementUserOrderCount(String userId);
+
   // Orders
   Future<List<OrderModel>> getOrders();
   Future<List<OrderModel>> getOrdersByStatus(OrderStatus status);
@@ -26,7 +27,8 @@ abstract class FirestoreDataSource {
     required double charge,
     required DateTime orderDate,
   });
-  Future<OrderModel> updateOrder(String id, {
+  Future<OrderModel> updateOrder(
+    String id, {
     String? vendorName,
     String? vendorPhone,
     List<OrderClient>? clients,
@@ -34,8 +36,16 @@ abstract class FirestoreDataSource {
     OrderStatus? status,
     DateTime? orderDate,
   });
-  Future<OrderModel> updateClientReceived(String orderId, String clientId, bool isReceived);
-  Future<OrderModel> uploadImagesForClient(String orderId, String clientId, List<String> imageUrls);
+  Future<OrderModel> updateClientReceived(
+    String orderId,
+    String clientId,
+    bool isReceived,
+  );
+  Future<OrderModel> uploadImagesForClient(
+    String orderId,
+    String clientId,
+    List<String> imageUrls,
+  );
   Future<void> deleteOrderImages(String orderId);
   Future<void> deleteOrder(String id);
   Future<void> deleteCompletedOrders();
@@ -43,11 +53,13 @@ abstract class FirestoreDataSource {
   // Vendors
   Future<List<VendorModel>> getVendors();
   Future<VendorModel?> getVendor(String id);
+  Future<VendorModel?> getVendorByNameAndPhone(String name, String phoneNumber);
   Future<VendorModel> createVendor({
     required String name,
     required String phoneNumber,
   });
-  Future<VendorModel> updateVendor(String id, {
+  Future<VendorModel> updateVendor(
+    String id, {
     String? name,
     String? phoneNumber,
   });
@@ -62,7 +74,8 @@ abstract class FirestoreDataSource {
     required String phoneNumber,
     required String address,
   });
-  Future<ClientModel> updateClient(String id, {
+  Future<ClientModel> updateClient(
+    String id, {
     String? name,
     String? phoneNumber,
     String? address,
@@ -80,9 +93,9 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
     FirebaseFirestore? firestore,
     firebase_auth.FirebaseAuth? auth,
     Uuid? uuid,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? firebase_auth.FirebaseAuth.instance,
-        _uuid = uuid ?? const Uuid();
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _auth = auth ?? firebase_auth.FirebaseAuth.instance,
+       _uuid = uuid ?? const Uuid();
 
   String get _currentUserId => _auth.currentUser?.uid ?? '';
 
@@ -90,20 +103,135 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   @override
   Future<void> createUser(User user) async {
     try {
-      final userModel = UserModel(
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        photoUrl: user.photoUrl,
-        createdAt: user.createdAt,
-      );
+      final doc = await _firestore.collection('users').doc(user.id).get();
 
-      await _firestore.collection('users').doc(user.id).set({
-        ...userModel.toJson(),
-        'userId': user.id, // Store the user ID as userId for consistency
-      });
+      // Get device ID - should always be available from DeviceHelper
+      String? deviceId = user.deviceId;
+      int deviceOrderCount = 0;
+
+      // Always sync with device if we have a valid device ID
+      if (deviceId != null &&
+          deviceId.isNotEmpty &&
+          deviceId != 'unknown-device') {
+        // Check if this device has been used before in free_plan_devices collection
+        final deviceQuery =
+            await _firestore
+                .collection('free_plan_devices')
+                .where('deviceId', isEqualTo: deviceId)
+                .limit(1)
+                .get();
+
+        if (deviceQuery.docs.isNotEmpty) {
+          // Device exists - get the order count
+          final deviceData = deviceQuery.docs.first.data();
+          deviceOrderCount = deviceData['orderCount'] as int? ?? 0;
+
+          // Update last used info
+          await _firestore
+              .collection('free_plan_devices')
+              .doc(deviceQuery.docs.first.id)
+              .update({
+                'lastUserId': user.id,
+                'lastSignInAt': DateTime.now().toIso8601String(),
+              });
+        } else {
+          // New device - create device record
+          await _firestore.collection('free_plan_devices').add({
+            'deviceId': deviceId,
+            'orderCount': 0,
+            'createdAt': DateTime.now().toIso8601String(),
+            'lastUserId': user.id,
+            'lastSignInAt': DateTime.now().toIso8601String(),
+          });
+        }
+      }
+
+      if (doc.exists) {
+        // Existing user - always sync device order count
+        await _firestore.collection('users').doc(user.id).update({
+          'email': user.email,
+          'name': user.name,
+          'photoUrl': user.photoUrl,
+          'deviceId': deviceId,
+          'orderCount': deviceOrderCount, // Always sync from device
+        });
+      } else {
+        // New user - create with device order count
+        final userModel = UserModel(
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          photoUrl: user.photoUrl,
+          createdAt: user.createdAt,
+          subscriptionType: 'free',
+          subscriptionExpiry: user.createdAt.add(const Duration(days: 7)),
+          isPro: false,
+          orderCount: deviceOrderCount, // Use device's order count
+          deviceId: deviceId,
+        );
+
+        await _firestore.collection('users').doc(user.id).set({
+          ...userModel.toJson(),
+          'userId': user.id,
+        });
+      }
     } catch (e) {
-      throw Exception('Failed to create user: $e');
+      throw Exception('Failed to create/update user: $e');
+    }
+  }
+
+  @override
+  Future<UserModel?> getUser(String id) async {
+    try {
+      final doc = await _firestore.collection('users').doc(id).get();
+      if (doc.exists) {
+        return UserModel.fromJson(doc.data()!);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get user: $e');
+    }
+  }
+
+  @override
+  Future<void> incrementUserOrderCount(String userId) async {
+    try {
+      // Increment user's order count
+      await _firestore.collection('users').doc(userId).update({
+        'orderCount': FieldValue.increment(1),
+      });
+
+      // Also increment device order count if device ID exists
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        final deviceId = userData?['deviceId'] as String?;
+
+        if (deviceId != null &&
+            deviceId.isNotEmpty &&
+            deviceId != 'unknown-device') {
+          // Update device order count in free_plan_devices collection
+          final deviceQuery =
+              await _firestore
+                  .collection('free_plan_devices')
+                  .where('deviceId', isEqualTo: deviceId)
+                  .limit(1)
+                  .get();
+
+          if (deviceQuery.docs.isNotEmpty) {
+            await _firestore
+                .collection('free_plan_devices')
+                .doc(deviceQuery.docs.first.id)
+                .update({
+                  'orderCount': FieldValue.increment(1),
+                  'lastUserId': userId,
+                  'updatedAt': DateTime.now().toIso8601String(),
+                });
+          }
+        }
+      }
+    } catch (e) {
+      throw Exception('Failed to increment user order count: $e');
     }
   }
 
@@ -111,12 +239,13 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   @override
   Future<List<OrderModel>> getOrders() async {
     try {
-      final snapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: _currentUserId)
-          .orderBy('orderDate', descending: true)
-          .get();
-      
+      final snapshot =
+          await _firestore
+              .collection('orders')
+              .where('userId', isEqualTo: _currentUserId)
+              .orderBy('orderDate', descending: true)
+              .get();
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return OrderModel.fromJson({...data, 'id': doc.id});
@@ -129,13 +258,14 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   @override
   Future<List<OrderModel>> getOrdersByStatus(OrderStatus status) async {
     try {
-      final snapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: _currentUserId)
-          .where('status', isEqualTo: status.toString().split('.').last)
-          .orderBy('orderDate', descending: true)
-          .get();
-      
+      final snapshot =
+          await _firestore
+              .collection('orders')
+              .where('userId', isEqualTo: _currentUserId)
+              .where('status', isEqualTo: status.toString().split('.').last)
+              .orderBy('orderDate', descending: true)
+              .get();
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return OrderModel.fromJson({...data, 'id': doc.id});
@@ -181,7 +311,24 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
         vendorId: vendorId,
         vendorName: vendorName,
         vendorPhone: vendorPhone,
-        clients: clients,
+        clients:
+            clients
+                .map(
+                  (client) => OrderClientModel(
+                    id: client.id,
+                    name: client.name,
+                    phoneNumber: client.phoneNumber,
+                    address: client.address,
+                    piecesNumber: client.piecesNumber,
+                    purchasePrice: client.purchasePrice,
+                    salePrice: client.salePrice,
+                    isReceived: client.isReceived,
+                    createdAt: client.createdAt,
+                    images: client.images,
+                    deposit: client.deposit,
+                  ),
+                )
+                .toList(),
         charge: charge,
         status: initialStatus,
         orderDate: orderDate,
@@ -223,7 +370,8 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }
 
   @override
-  Future<OrderModel> updateOrder(String id, {
+  Future<OrderModel> updateOrder(
+    String id, {
     String? vendorName,
     String? vendorPhone,
     List<OrderClient>? clients,
@@ -233,15 +381,31 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }) async {
     try {
       final now = DateTime.now();
-      final updates = <String, dynamic>{
-        'updatedAt': now.toIso8601String(),
-      };
+      final updates = <String, dynamic>{'updatedAt': now.toIso8601String()};
 
       if (vendorName != null) updates['vendorName'] = vendorName;
       if (vendorPhone != null) updates['vendorPhone'] = vendorPhone;
       if (clients != null) {
-        updates['clients'] = clients.map((client) => (client as OrderClientModel).toJson()).toList();
-        
+        updates['clients'] =
+            clients
+                .map(
+                  (client) =>
+                      OrderClientModel(
+                        id: client.id,
+                        name: client.name,
+                        phoneNumber: client.phoneNumber,
+                        address: client.address,
+                        piecesNumber: client.piecesNumber,
+                        purchasePrice: client.purchasePrice,
+                        salePrice: client.salePrice,
+                        isReceived: client.isReceived,
+                        createdAt: client.createdAt,
+                        images: client.images,
+                        deposit: client.deposit,
+                      ).toJson(),
+                )
+                .toList();
+
         // Store new clients in clients collection
         for (final client in clients) {
           await _firestore.collection('clients').doc(client.id).set({
@@ -273,102 +437,118 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }
 
   @override
-  Future<OrderModel> updateClientReceived(String orderId, String clientId, bool isReceived) async {
+  Future<OrderModel> updateClientReceived(
+    String orderId,
+    String clientId,
+    bool isReceived,
+  ) async {
     try {
-      final order = await getOrder(orderId);
-      if (order == null) {
-        throw Exception('Order not found');
-      }
+      // Use Firestore transaction to prevent race conditions
+      return await _firestore.runTransaction<OrderModel>((transaction) async {
+        final orderRef = _firestore.collection('orders').doc(orderId);
+        final orderDoc = await transaction.get(orderRef);
 
-      final updatedClients = order.clients.map((client) {
-        if (client.id == clientId) {
-          return OrderClientModel(
-            deposit: client.deposit,
-            id: client.id,
-            name: client.name,
-            phoneNumber: client.phoneNumber,
-            address: client.address,
-            piecesNumber: client.piecesNumber,
-            purchasePrice: client.purchasePrice,
-            salePrice: client.salePrice,
-            isReceived: isReceived,
-            createdAt: client.createdAt,
-          );
+        if (!orderDoc.exists) {
+          throw Exception('Order not found');
         }
-        return OrderClientModel(
-          deposit: client.deposit,
-          id: client.id,
-          name: client.name,
-          phoneNumber: client.phoneNumber,
-          address: client.address,
-          piecesNumber: client.piecesNumber,
-          purchasePrice: client.purchasePrice,
-          salePrice: client.salePrice,
-          isReceived: client.isReceived,
-          createdAt: client.createdAt,
+
+        final orderData = orderDoc.data()!;
+        if (orderData['userId'] != _currentUserId) {
+          throw Exception('Unauthorized access to order');
+        }
+
+        final order = OrderModel.fromJson({...orderData, 'id': orderDoc.id});
+
+        // Update the specific client using copyWith
+        final updatedClients =
+            order.clients.map((client) {
+              if (client.id == clientId) {
+                return (client as OrderClientModel).copyWith(
+                  isReceived: isReceived,
+                );
+              }
+              return client as OrderClientModel;
+            }).toList();
+
+        // Check if all clients are received
+        final allReceived = updatedClients.every((client) => client.isReceived);
+        OrderStatus newStatus;
+
+        if (allReceived && updatedClients.isNotEmpty) {
+          newStatus = OrderStatus.complete;
+        } else if (updatedClients.any((client) => client.isReceived)) {
+          newStatus = OrderStatus.working;
+        } else {
+          newStatus = OrderStatus.pending;
+        }
+
+        // Write update atomically
+        transaction.update(orderRef, {
+          'clients': updatedClients.map((c) => c.toJson()).toList(),
+          'status': newStatus.toString().split('.').last,
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+
+        // Return updated order
+        final updatedOrder = OrderModel(
+          id: order.id,
+          vendorId: order.vendorId,
+          vendorName: order.vendorName,
+          vendorPhone: order.vendorPhone,
+          clients: updatedClients,
+          charge: order.charge,
+          status: newStatus,
+          orderDate: order.orderDate,
+          createdAt: order.createdAt,
+          updatedAt: DateTime.now(),
+          userId: order.userId,
         );
-      }).toList();
 
-      // Check if all clients are received
-      final allReceived = updatedClients.every((client) => client.isReceived);
-      OrderStatus newStatus;
-      
-      if (allReceived && updatedClients.isNotEmpty) {
-        newStatus = OrderStatus.complete;
-        // Delete images when order becomes complete
-        print('🔄 Order $orderId is now complete. Deleting images...');
-        await deleteOrderImages(orderId);
-        print('✅ Images deleted for completed order: $orderId');
-      } else if (updatedClients.isNotEmpty) {
-        newStatus = OrderStatus.working;
-      } else {
-        newStatus = order.status; // Keep current status if no clients
-      }
+        // Delete images if order is complete (after transaction completes)
+        if (allReceived && updatedClients.isNotEmpty) {
+          // Schedule image deletion after transaction
+          Future.microtask(() async {
+            try {
+              print('🔄 Order $orderId is now complete. Clearing images...');
+              await deleteOrderImages(orderId);
+              print('✅ Images cleared for completed order: $orderId');
+            } catch (e) {
+              print('⚠️ Failed to clear images: $e');
+            }
+          });
+        }
 
-      return await updateOrder(orderId, clients: updatedClients, status: newStatus);
+        return updatedOrder;
+      });
     } catch (e) {
       throw Exception('Failed to update client received status: $e');
     }
   }
 
   @override
-  Future<OrderModel> uploadImagesForClient(String orderId, String clientId, List<String> imageUrls) async {
+  Future<OrderModel> uploadImagesForClient(
+    String orderId,
+    String clientId,
+    List<String> imageUrls,
+  ) async {
     try {
       final order = await getOrder(orderId);
       if (order == null) {
         throw Exception('Order not found');
       }
 
-      final updatedClients = order.clients.map((client) {
-        if (client.id == clientId) {
-          return OrderClientModel(
-            deposit: client.deposit,
-            id: client.id,
-            name: client.name,
-            phoneNumber: client.phoneNumber,
-            address: client.address,
-            piecesNumber: client.piecesNumber,
-            purchasePrice: client.purchasePrice,
-            salePrice: client.salePrice,
-            isReceived: client.isReceived,
-            createdAt: client.createdAt,
-            images: List.from(client.images)..addAll(imageUrls),
-          );
-        }
-        return OrderClientModel(
-          deposit: client.deposit,
-          id: client.id,
-          name: client.name,
-          phoneNumber: client.phoneNumber,
-          address: client.address,
-          piecesNumber: client.piecesNumber,
-          purchasePrice: client.purchasePrice,
-          salePrice: client.salePrice,
-          isReceived: client.isReceived,
-          createdAt: client.createdAt,
-          images: client.images,
-        );
-      }).toList();
+      // Update client images using copyWith
+      final updatedClients =
+          order.clients.map((client) {
+            if (client.id == clientId) {
+              final currentImages = List<String>.from(client.images);
+              currentImages.addAll(imageUrls);
+              return (client as OrderClientModel).copyWith(
+                images: currentImages,
+              );
+            }
+            return client as OrderClientModel;
+          }).toList();
 
       return await updateOrder(orderId, clients: updatedClients);
     } catch (e) {
@@ -379,54 +559,24 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   @override
   Future<void> deleteOrderImages(String orderId) async {
     try {
-      // Get the order to extract image URLs
       final order = await getOrder(orderId);
       if (order == null) {
         print('Order not found for image deletion: $orderId');
         return;
       }
 
-      // Collect all image URLs from all clients
-      final List<String> imageUrls = [];
-      for (final client in order.clients) {
-        imageUrls.addAll(client.images);
-      }
+      // Clear all images using copyWith
+      final updatedClients =
+          order.clients.map((client) {
+            return (client as OrderClientModel).copyWith(images: const []);
+          }).toList();
 
-      if (imageUrls.isEmpty) {
-        print('No images found for order: $orderId');
-        return;
-      }
+      // Update order with cleared images
+      await updateOrder(orderId, clients: updatedClients);
 
-      // Delete images from Supabase storage
-      final supabase = Supabase.instance.client;
-      int deletedCount = 0;
-
-      for (final imageUrl in imageUrls) {
-        try {
-          final uri = Uri.parse(imageUrl);
-          final pathSegments = uri.pathSegments;
-          
-          // Extract file path from URL
-          // URL format: https://xxx.supabase.co/storage/v1/object/public/order-images/path/to/file
-          if (pathSegments.length >= 4 && pathSegments[2] == 'order-images') {
-            final filePath = pathSegments.sublist(3).join('/');
-            
-            await supabase.storage
-                .from('order-images')
-                .remove([filePath]);
-            
-            deletedCount++;
-            print('Deleted image: $filePath');
-          }
-        } catch (e) {
-          print('Failed to delete image $imageUrl: $e');
-          // Continue with other images even if one fails
-        }
-      }
-
-      print('Successfully deleted $deletedCount images for order: $orderId');
+      print('Image URLs cleared from order: $orderId');
     } catch (e) {
-      print('Error deleting order images: $e');
+      print('Error clearing order images: $e');
       // Don't throw exception to avoid breaking the order completion process
     }
   }
@@ -439,23 +589,24 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
       if (!orderDoc.exists) {
         throw Exception('Order not found');
       }
-      
+
       final orderData = orderDoc.data()!;
       final vendorId = orderData['vendorId'] as String?;
-      
+
       // Delete the order
       await _firestore.collection('orders').doc(id).delete();
-      
+
       // If vendorId exists, check if other orders use this vendor before deleting
       if (vendorId != null && vendorId.isNotEmpty) {
         try {
           // Check if there are other orders using this vendor
-          final otherOrdersQuery = await _firestore
-              .collection('orders')
-              .where('vendorId', isEqualTo: vendorId)
-              .where('userId', isEqualTo: _currentUserId)
-              .get();
-          
+          final otherOrdersQuery =
+              await _firestore
+                  .collection('orders')
+                  .where('vendorId', isEqualTo: vendorId)
+                  .where('userId', isEqualTo: _currentUserId)
+                  .get();
+
           // If no other orders use this vendor, delete the vendor
           if (otherOrdersQuery.docs.isEmpty) {
             await _firestore.collection('vendors').doc(vendorId).delete();
@@ -463,7 +614,9 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
         } catch (vendorError) {
           // Don't throw exception for vendor deletion to avoid breaking the order deletion
           // Just log the error for debugging
-          print('Warning: Failed to check or delete vendor $vendorId: $vendorError');
+          print(
+            'Warning: Failed to check or delete vendor $vendorId: $vendorError',
+          );
         }
       }
     } catch (e) {
@@ -476,11 +629,11 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
     try {
       final completedOrders = await getOrdersByStatus(OrderStatus.complete);
       final batch = _firestore.batch();
-      
+
       for (final order in completedOrders) {
         batch.delete(_firestore.collection('orders').doc(order.id));
       }
-      
+
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to delete completed orders: $e');
@@ -491,12 +644,13 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   @override
   Future<List<VendorModel>> getVendors() async {
     try {
-      final snapshot = await _firestore
-          .collection('vendors')
-          .where('userId', isEqualTo: _currentUserId)
-          .orderBy('createdAt', descending: true)
-          .get();
-      
+      final snapshot =
+          await _firestore
+              .collection('vendors')
+              .where('userId', isEqualTo: _currentUserId)
+              .orderBy('createdAt', descending: true)
+              .get();
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return VendorModel.fromJson({...data, 'id': doc.id});
@@ -511,8 +665,8 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
     try {
       final doc = await _firestore.collection('vendors').doc(id).get();
       if (doc.exists) {
-        final data = doc.data()!;
-        if (data['userId'] == _currentUserId) {
+        final data = doc.data();
+        if (data != null && data['userId'] == _currentUserId) {
           return VendorModel.fromJson({...data, 'id': doc.id});
         }
       }
@@ -523,11 +677,44 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }
 
   @override
+  Future<VendorModel?> getVendorByNameAndPhone(
+    String name,
+    String phoneNumber,
+  ) async {
+    try {
+      final querySnapshot =
+          await _firestore
+              .collection('vendors')
+              .where('userId', isEqualTo: _currentUserId)
+              .where('name', isEqualTo: name)
+              .where('phoneNumber', isEqualTo: phoneNumber)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final data = querySnapshot.docs.first.data();
+        return VendorModel.fromJson({
+          ...data,
+          'id': querySnapshot.docs.first.id,
+        });
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get vendor by name and phone: $e');
+    }
+  }
+
+  @override
   Future<VendorModel> createVendor({
     required String name,
     required String phoneNumber,
   }) async {
     try {
+      // Check if vendor already exists
+      final existingVendor = await getVendorByNameAndPhone(name, phoneNumber);
+      if (existingVendor != null) {
+        return existingVendor;
+      }
+
       final now = DateTime.now();
       final vendor = VendorModel(
         id: _uuid.v4(),
@@ -549,15 +736,14 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }
 
   @override
-  Future<VendorModel> updateVendor(String id, {
+  Future<VendorModel> updateVendor(
+    String id, {
     String? name,
     String? phoneNumber,
   }) async {
     try {
       final now = DateTime.now();
-      final updates = <String, dynamic>{
-        'updatedAt': now.toIso8601String(),
-      };
+      final updates = <String, dynamic>{'updatedAt': now.toIso8601String()};
 
       if (name != null) updates['name'] = name;
       if (phoneNumber != null) updates['phoneNumber'] = phoneNumber;
@@ -588,12 +774,13 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   @override
   Future<List<ClientModel>> getClients() async {
     try {
-      final snapshot = await _firestore
-          .collection('clients')
-          .where('userId', isEqualTo: _currentUserId)
-          .orderBy('createdAt', descending: true)
-          .get();
-      
+      final snapshot =
+          await _firestore
+              .collection('clients')
+              .where('userId', isEqualTo: _currentUserId)
+              .orderBy('createdAt', descending: true)
+              .get();
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return ClientModel.fromJson({...data, 'id': doc.id});
@@ -608,8 +795,8 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
     try {
       final doc = await _firestore.collection('clients').doc(id).get();
       if (doc.exists) {
-        final data = doc.data()!;
-        if (data['userId'] == _currentUserId) {
+        final data = doc.data();
+        if (data != null && data['userId'] == _currentUserId) {
           return ClientModel.fromJson({...data, 'id': doc.id});
         }
       }
@@ -620,18 +807,25 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }
 
   @override
-  Future<ClientModel?> getClientByNameAndPhone(String name, String phoneNumber) async {
+  Future<ClientModel?> getClientByNameAndPhone(
+    String name,
+    String phoneNumber,
+  ) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('clients')
-          .where('userId', isEqualTo: _currentUserId)
-          .where('name', isEqualTo: name)
-          .where('phoneNumber', isEqualTo: phoneNumber)
-          .get();
-      
+      final querySnapshot =
+          await _firestore
+              .collection('clients')
+              .where('userId', isEqualTo: _currentUserId)
+              .where('name', isEqualTo: name)
+              .where('phoneNumber', isEqualTo: phoneNumber)
+              .get();
+
       if (querySnapshot.docs.isNotEmpty) {
-        final data = querySnapshot.docs.first.data()!;
-        return ClientModel.fromJson({...data, 'id': querySnapshot.docs.first.id});
+        final data = querySnapshot.docs.first.data();
+        return ClientModel.fromJson({
+          ...data,
+          'id': querySnapshot.docs.first.id,
+        });
       }
       return null;
     } catch (e) {
@@ -646,6 +840,12 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
     required String address,
   }) async {
     try {
+      // Check if client already exists
+      final existingClient = await getClientByNameAndPhone(name, phoneNumber);
+      if (existingClient != null) {
+        return existingClient;
+      }
+
       final now = DateTime.now();
       final client = ClientModel(
         id: _uuid.v4(),
@@ -668,16 +868,15 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
   }
 
   @override
-  Future<ClientModel> updateClient(String id, {
+  Future<ClientModel> updateClient(
+    String id, {
     String? name,
     String? phoneNumber,
     String? address,
   }) async {
     try {
       final now = DateTime.now();
-      final updates = <String, dynamic>{
-        'updatedAt': now.toIso8601String(),
-      };
+      final updates = <String, dynamic>{'updatedAt': now.toIso8601String()};
 
       if (name != null) updates['name'] = name;
       if (phoneNumber != null) updates['phoneNumber'] = phoneNumber;
@@ -705,30 +904,33 @@ class FirestoreDataSourceImpl implements FirestoreDataSource {
     }
   }
 
-  Future<void> deleteClientsByNameAndPhone(List<Map<String, String>> clients) async {
+  Future<void> deleteClientsByNameAndPhone(
+    List<Map<String, String>> clients,
+  ) async {
     try {
       final batch = _firestore.batch();
-      
+
       for (final client in clients) {
         final name = client['name']!;
         final phone = client['phoneNumber']!;
-        
+
         // Find clients by name and phone number
-        final querySnapshot = await _firestore
-            .collection('clients')
-            .where('userId', isEqualTo: _currentUserId)
-            .where('name', isEqualTo: name)
-            .where('phoneNumber', isEqualTo: phone)
-            .get();
-        
+        final querySnapshot =
+            await _firestore
+                .collection('clients')
+                .where('userId', isEqualTo: _currentUserId)
+                .where('name', isEqualTo: name)
+                .where('phoneNumber', isEqualTo: phone)
+                .get();
+
         for (final doc in querySnapshot.docs) {
           batch.delete(doc.reference);
         }
       }
-      
+
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to delete clients by name and phone: $e');
     }
   }
-} 
+}

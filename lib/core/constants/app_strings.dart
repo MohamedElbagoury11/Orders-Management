@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 class AppStrings {
   static const Locale english = Locale('en', 'US');
   static const Locale arabic = Locale('ar', 'SA');
-  
+
   static const List<Locale> supportedLocales = [english, arabic];
 
   // App Name
   static String get appName => _getString('appName');
-  
+
   // Authentication
+  static String get WhyPremium => _getString('WhyPremium');
   static String get login => _getString('login');
   static String get signUp => _getString('signUp');
   static String get email => _getString('email');
@@ -19,12 +20,12 @@ class AppStrings {
   static String get dontHaveAccount => _getString('dontHaveAccount');
   static String get alreadyHaveAccount => _getString('alreadyHaveAccount');
   static String get signInWithGoogle => _getString('signInWithGoogle');
-  
+
   // Home Categories
   static String get vendors => _getString('vendors');
   static String get clients => _getString('clients');
   static String get orders => _getString('orders');
-  
+
   // Vendors
   static String get vendorName => _getString('vendorName');
   static String get phoneNumber => _getString('phoneNumber');
@@ -34,10 +35,10 @@ class AppStrings {
   static String get editVendor => _getString('editVendor');
   static String get deleteVendor => _getString('deleteVendor');
   static String get searchVendors => _getString('searchVendors');
-  
+
   // Orders
-   static String get remaining => _getString('remaining');
-   static String get paymentDetails=> _getString('paymentDetails');
+  static String get remaining => _getString('remaining');
+  static String get paymentDetails => _getString('paymentDetails');
   static String get orderDetails => _getString('orderDetails');
   static String get piecesNumber => _getString('piecesNumber');
   static String get totalPurchasePrice => _getString('totalPurchasePrice');
@@ -53,7 +54,7 @@ class AppStrings {
   static String get received => _getString('received');
   static String get addNewOrder => _getString('addNewOrder');
   static String get deleteOrder => _getString('deleteOrder');
-  
+
   // Clients
   static String get clientName => _getString('clientName');
   static String get address => _getString('address');
@@ -62,7 +63,7 @@ class AppStrings {
   static String get deleteClient => _getString('deleteClient');
   static String get searchClients => _getString('searchClients');
   static String get selectVendor => _getString('selectVendor');
-  
+
   // Common
   static String get save => _getString('save');
   static String get cancel => _getString('cancel');
@@ -71,14 +72,20 @@ class AppStrings {
   static String get submit => _getString('submit');
   static String get total => _getString('total');
   static String get period => _getString('period');
-  
+
   // Messages
-  static String get orderDeletedSuccessfully => _getString('orderDeletedSuccessfully');
-  static String get clientDeletedSuccessfully => _getString('clientDeletedSuccessfully');
-  static String get vendorDeletedSuccessfully => _getString('vendorDeletedSuccessfully');
-  static String get orderAddedSuccessfully => _getString('orderAddedSuccessfully');
-  static String get clientAddedSuccessfully => _getString('clientAddedSuccessfully');
-  static String get vendorAddedSuccessfully => _getString('vendorAddedSuccessfully');
+  static String get orderDeletedSuccessfully =>
+      _getString('orderDeletedSuccessfully');
+  static String get clientDeletedSuccessfully =>
+      _getString('clientDeletedSuccessfully');
+  static String get vendorDeletedSuccessfully =>
+      _getString('vendorDeletedSuccessfully');
+  static String get orderAddedSuccessfully =>
+      _getString('orderAddedSuccessfully');
+  static String get clientAddedSuccessfully =>
+      _getString('clientAddedSuccessfully');
+  static String get vendorAddedSuccessfully =>
+      _getString('vendorAddedSuccessfully');
   static String get errorOccurred => _getString('errorOccurred');
   static String get noOrdersFound => _getString('noOrdersFound');
   static String get noClientsFound => _getString('noClientsFound');
@@ -86,7 +93,8 @@ class AppStrings {
 
   // Home Page
   static String get dashboard => _getString('dashboard');
-  static String get manageBusinessEfficiently => _getString('manageBusinessEfficiently');
+  static String get manageBusinessEfficiently =>
+      _getString('manageBusinessEfficiently');
   static String get welcomeBack => _getString('welcomeBack');
   static String get readyToManageOrders => _getString('readyToManageOrders');
   static String get totalOrders => _getString('totalOrders');
@@ -104,22 +112,31 @@ class AppStrings {
   static String get language => _getString('language');
   static String get englishLanguage => _getString('englishLanguage');
   static String get arabicLanguage => _getString('arabicLanguage');
-  static String get tryAdjustingSearchTerms => _getString('tryAdjustingSearchTerms');
-  static String get vendorsWillAppearHere => _getString('vendorsWillAppearHere');
+  static String get tryAdjustingSearchTerms =>
+      _getString('tryAdjustingSearchTerms');
+  static String get vendorsWillAppearHere =>
+      _getString('vendorsWillAppearHere');
   static String get resultsFound => _getString('resultsFound');
   static String get resultFound => _getString('resultFound');
   static String get errorLoadingVendors => _getString('errorLoadingVendors');
   static String get retry => _getString('retry');
   static String get ordersHistory => _getString('ordersHistory');
-  static String get clientsDeletedSuccessfully => _getString('clientsDeletedSuccessfully');
+  static String get clientsDeletedSuccessfully =>
+      _getString('clientsDeletedSuccessfully');
   static String get addYourFirstClient => _getString('addYourFirstClient');
   static String get errorLoadingClients => _getString('errorLoadingClients');
   static String get deleteClients => _getString('deleteClients');
   static String get addNewClient => _getString('addNewClient');
   static String get name => _getString('name');
   static String get pleaseEnterName => _getString('pleaseEnterName');
-  static String get pleaseEnterPhoneNumber => _getString('pleaseEnterPhoneNumber');
+  static String get pleaseEnterPhoneNumber =>
+      _getString('pleaseEnterPhoneNumber');
   static String get pleaseEnterAddress => _getString('pleaseEnterAddress');
+  static String get pleaseEnterPieces => _getString('pleaseEnterPieces');
+  static String get pleaseEnterPurchasePrice =>
+      _getString('pleaseEnterPurchasePrice');
+  static String get pleaseEnterSalePrice => _getString('pleaseEnterSalePrice');
+  static String get pleaseEnterDeposit => _getString('pleaseEnterDeposit');
   static String get collect => _getString('collect');
   static String get close => _getString('close');
   static String get vendorInformation => _getString('vendorInformation');
@@ -132,7 +149,8 @@ class AppStrings {
   static String get sale => _getString('sale');
   static String get signInToContinue => _getString('signInToContinue');
   static String get pleaseEnterEmail => _getString('pleaseEnterEmail');
-  static String get pleaseEnterValidEmail => _getString('pleaseEnterValidEmail');
+  static String get pleaseEnterValidEmail =>
+      _getString('pleaseEnterValidEmail');
   static String get pleaseEnterPassword => _getString('pleaseEnterPassword');
   static String get or => _getString('or');
   static String get debugAuth => _getString('debugAuth');
@@ -140,7 +158,8 @@ class AppStrings {
   static String get pleaseFillDetails => _getString('pleaseFillDetails');
   static String get fullName => _getString('fullName');
   static String get pleaseEnterFullName => _getString('pleaseEnterFullName');
-  static String get pleaseConfirmPassword => _getString('pleaseConfirmPassword');
+  static String get pleaseConfirmPassword =>
+      _getString('pleaseConfirmPassword');
   static String get passwordsDoNotMatch => _getString('passwordsDoNotMatch');
   static String get signIn => _getString('signIn');
 
@@ -150,7 +169,8 @@ class AppStrings {
   static String get allCompletedOrders => _getString('allCompletedOrders');
   static String get totalCharges => _getString('totalCharges');
   static String get completedOrders => _getString('completedOrders');
-  static String get noCompletedOrdersFound => _getString('noCompletedOrdersFound');
+  static String get noCompletedOrdersFound =>
+      _getString('noCompletedOrdersFound');
   static String get completeSomeOrders => _getString('completeSomeOrders');
   static String get orderNumber => _getString('orderNumber');
   static String get vendor => _getString('vendor');
@@ -163,7 +183,8 @@ class AppStrings {
   static String get complete => _getString('complete');
   static String get collectDone => _getString('collectDone');
   static String get areYouSureCollect => _getString('areYouSureCollect');
-  static String get orderUpdatedSuccessfully => _getString('orderUpdatedSuccessfully');
+  static String get orderUpdatedSuccessfully =>
+      _getString('orderUpdatedSuccessfully');
   static String get errorLoadingOrders => _getString('errorLoadingOrders');
   static String get refresh => _getString('refresh');
   static String get orderStatusChip => _getString('orderStatusChip');
@@ -183,54 +204,176 @@ class AppStrings {
   static String get editOrder => _getString('editOrder');
   static String get collectOrderTitle => _getString('collectOrderTitle');
   static String get vendorPhoneNumber => _getString('vendorPhoneNumber');
-  static String get pleaseEnterVendorName => _getString('pleaseEnterVendorName');
-  static String get pleaseEnterVendorPhone => _getString('pleaseEnterVendorPhone');
-  static String get pleaseEnterChargeAmount => _getString('pleaseEnterChargeAmount');
-  static String get pleaseEnterValidNumber => _getString('pleaseEnterValidNumber');
+  static String get pleaseEnterVendorName =>
+      _getString('pleaseEnterVendorName');
+  static String get pleaseEnterVendorPhone =>
+      _getString('pleaseEnterVendorPhone');
+  static String get pleaseEnterChargeAmount =>
+      _getString('pleaseEnterChargeAmount');
+  static String get egp => _getString('EGP');
+  static String get pleaseEnterValidNumber =>
+      _getString('pleaseEnterValidNumber');
   static String get clientsSectionTitle => _getString('clientsSectionTitle');
   static String get noClientsAddedYet => _getString('noClientsAddedYet');
   static String get orderSummary => _getString('orderSummary');
   static String get saveChanges => _getString('saveChanges');
   static String get createOrder => _getString('createOrder');
-  static String get pleaseAddAtLeastOneClient => _getString('pleaseAddAtLeastOneClient');
+  static String get pleaseAddAtLeastOneClient =>
+      _getString('pleaseAddAtLeastOneClient');
+  static String get lightMode => _getString('lightMode');
+  static String get darkMode => _getString('darkMode');
   static String get great => _getString('great');
   static String get yourChangesUpdated => _getString('yourChangesUpdated');
-  static String get orderCreatedSuccessfully => _getString('orderCreatedSuccessfully');
+  static String get orderCreatedSuccessfully =>
+      _getString('orderCreatedSuccessfully');
+  static String get importFromContacts => _getString('importFromContacts');
+  static String get orderCompleted => _getString('orderCompleted');
   static String get addClientDialog => _getString('addClientDialog');
   static String get editClientDialog => _getString('editClientDialog');
   static String get pleaseEnterPhone => _getString('pleaseEnterPhone');
-  static String get pleaseEnterPiecesNumber => _getString('pleaseEnterPiecesNumber');
-  static String get pleaseEnterPurchasePrice => _getString('pleaseEnterPurchasePrice');
-  static String get pleaseEnterSalePrice => _getString('pleaseEnterSalePrice');
-
+  static String get pleaseEnterPiecesNumber =>
+      _getString('pleaseEnterPiecesNumber');
+  static String get sendMessageToClient => _getString('sendMessageToClient');
+  static String get enterMessage => _getString('enterMessage');
+  static String get whatsappMessageTo => _getString('whatsappMessageTo');
+  static String get orderMessageTemplate => _getString('orderMessageTemplate');
   // Client Orders Page
   static String get clientOrders => _getString('clientOrders');
   static String get loadingOrders => _getString('loadingOrders');
-  static String get clientHasntPlacedOrders => _getString('clientHasntPlacedOrders');
-  static String get errorLoadingOrdersTitle => _getString('errorLoadingOrdersTitle');
+  static String get clientHasntPlacedOrders =>
+      _getString('clientHasntPlacedOrders');
+  static String get errorLoadingOrdersTitle =>
+      _getString('errorLoadingOrdersTitle');
   static String get status => _getString('status');
   static String get notReceived => _getString('notReceived');
 
+  // Subscription
+  static String get save200EGPComparedToMonthly =>
+      _getString('save200EGPComparedToMonthly');
+  static String get off50 => _getString('off50');
+  static String get plansPricing => _getString('plansPricing');
+  static String get monthlyPlan => _getString('monthlyPlan');
+  static String get yearlyPlan => _getString('yearlyPlan');
+  static String get proPlan => _getString('proPlan');
+  static String get lifetime => _getString('lifetime');
+  static String get choosePlan => _getString('choosePlan');
+  static String get bestValue => _getString('bestValue');
+  static String get paymentMethods => _getString('paymentMethods');
+  static String get vodafoneCash => _getString('vodafoneCash');
+  static String get instapay => _getString('instapay');
+  static String get copiedToClipboard => _getString('copiedToClipboard');
+  static String get payForPlan => _getString('payForPlan');
+  static String get followSteps => _getString('followSteps');
+  static String get transferAmount => _getString('transferAmount');
+  static String get takeScreenshot => _getString('takeScreenshot');
+  static String get sendWhatsAppActivation =>
+      _getString('sendWhatsAppActivation');
+  static String get sendToWhatsApp => _getString('sendToWhatsApp');
+  static String get unlimitedOrders => _getString('unlimitedOrders');
+  static String get fullAnalytics => _getString('fullAnalytics');
+  static String get support247 => _getString('support247');
+  static String get prioritySupport => _getString('prioritySupport');
+  static String get customBranding => _getString('customBranding');
+  static String get noMonthlyFees => _getString('noMonthlyFees');
+  static String get freeTrialActive => _getString('freeTrialActive');
+  static String get exploreFeaturesFree => _getString('exploreFeaturesFree');
+  static String get subscribeNow => _getString('subscribeNow');
+  static String get chooseAnExistingClient =>
+      _getString('chooseAnExistingClient');
+  static String get chooseAnExistingVendor =>
+      _getString('chooseAnExistingVendor');
+  static String get add => _getString('add');
+  static String get freePlanLimitReached => _getString('freePlanLimitReached');
+  static String get subscriptionRequired => _getString('subscriptionRequired');
+
+  // Error Messages
+  static String get errorPrefix => _getString('errorPrefix');
+  static String get errorPickingImages => _getString('errorPickingImages');
+  static String get errorUploadingImages => _getString('errorUploadingImages');
+  static String get errorDeletingOrder => _getString('errorDeletingOrder');
+  static String get errorPreparingDelete => _getString('errorPreparingDelete');
+  static String get errorShowingDeleteConfirmation =>
+      _getString('errorShowingDeleteConfirmation');
+  static String get errorDeletingClient => _getString('errorDeletingClient');
+
+  // Dialog Titles & Confirmations
+  static String get deleteOrderTitle => _getString('deleteOrderTitle');
+  static String get areYouSureDeleteOrder =>
+      _getString('areYouSureDeleteOrder');
+  static String get deleteClientTitle => _getString('deleteClientTitle');
+  static String get selectClientsToDelete =>
+      _getString('selectClientsToDelete');
+  static String get confirmDeleteTitle => _getString('confirmDeleteTitle');
+  static String get logout => _getString('logout');
+  static String get addClientTitle => _getString('addClientTitle');
+
+  // Success Messages
+  static String get orderDeletedSuccess => _getString('orderDeletedSuccess');
+  static String get imagesUploadedSuccess =>
+      _getString('imagesUploadedSuccess');
+  static String get cloudSync => _getString('cloudSync');
+  static String get cloudSyncDescription => _getString('cloudSyncDescription');
+  static String get businessInsights => _getString('businessInsights');
+  static String get businessInsightsDescription =>
+      _getString('businessInsightsDescription');
+  static String get prioritySupportDescription =>
+      _getString('prioritySupportDescription');
+  // Image Upload
+  static String get addImagesRemaining => _getString('addImagesRemaining');
+  static String get pickImages => _getString('pickImages');
+  static String get uploadImages => _getString('uploadImages');
+  static String get uploadFunctionality => _getString('uploadFunctionality');
+
+  // Test/Debug Pages
+  static String get testImageUpload => _getString('testImageUpload');
+  static String get testSignUp => _getString('testSignUp');
+  static String get testSignIn => _getString('testSignIn');
+  static String get testGoogleSignIn => _getString('testGoogleSignIn');
+  static String get testSignOut => _getString('testSignOut');
+  static String get clear => _getString('clear');
+  static String get selectPlan => _getString('selectPlan');
+  static String get help => _getString('help');
+  // Miscellaneous
+  static String get phoneLabel => _getString('phoneLabel');
+  static String get addressLabel => _getString('addressLabel');
+  static String get ok => _getString('ok');
+  static String get haveAProblem => _getString('haveAProblem');
   // Language context
   static Locale? _currentLocale;
-  
+
   static void setLocale(Locale locale) {
     _currentLocale = locale;
   }
-  
+
   static String _getString(String key) {
     final locale = _currentLocale ?? const Locale('en', 'US');
     final isArabic = locale.languageCode == 'ar';
-    
+
     return _translations[isArabic ? 'ar' : 'en']?[key] ?? key;
   }
 
- // static const String paymentDetails = 'Payment Details';
+  // static const String paymentDetails = 'Payment Details';
 
   static const Map<String, Map<String, String>> _translations = {
     'en': {
-      'appName': 'All She Needs',
+      'off50': '50% OFF',
+      'save200EGPComparedToMonthly': 'Save 200 EGP compared to monthly',
+      'help': 'Help',
+      'cloudSync': 'Cloud Sync',
+      'businessInsights': 'Business Insights',
+      'prioritySupport': 'Priority Support',
+      'cloudSyncDescription': 'Your data is safe and synced across devices.',
+      'businessInsightsDescription':
+          'Track your performance with beautiful charts.',
+      'prioritySupportDescription':
+          'Get help from our team whenever you need it.',
+      'WhyPremium': 'Why Premium?',
+      'importFromContacts': 'Import from Contacts',
+      'lightMode': 'Light Mode',
+      'darkMode': 'Dark Mode',
+      'appName': 'Order Management',
       'login': 'Login',
+      'logout': 'Logout',
       'signUp': 'Sign Up',
       'email': 'Email',
       'password': 'Password',
@@ -292,10 +435,11 @@ class AppStrings {
       'dashboard': 'Dashboard',
       'manageBusinessEfficiently': 'Manage your business efficiently',
       'welcomeBack': 'Welcome back!',
-      'readyToManageOrders': 'Ready to manage your orders and grow your business?',
-             'totalOrders': 'Total Orders',
-       'activeClients': 'Active Clients',
-       'quickActions': 'Quick Actions',
+      'readyToManageOrders':
+          'Ready to manage your orders and grow your business?',
+      'totalOrders': 'Total Orders',
+      'activeClients': 'Active Clients',
+      'quickActions': 'Quick Actions',
       'collectOrder': 'Collect Order',
       'createNewOrders': 'Create new orders',
       'viewAllOrders': 'View all orders',
@@ -305,47 +449,48 @@ class AppStrings {
       'analytics': 'Analytics',
       'viewReports': 'View reports',
       'analyticsComingSoon': 'Analytics feature coming soon!',
-             'language': 'Language',
-       'englishLanguage': 'English',
-       'arabicLanguage': 'العربية',
-       'tryAdjustingSearchTerms': 'Try adjusting your search terms',
-       'vendorsWillAppearHere': 'Vendors will appear here once orders are added',
-       'resultsFound': 'results found',
-       'resultFound': 'result found',
-       'errorLoadingVendors': 'Error Loading Vendors',
-       'retry': 'Retry',
-       'ordersHistory': 'Orders History',
-       'clientsDeletedSuccessfully': 'Clients deleted successfully',
-       'addYourFirstClient': 'Add your first client to get started',
-       'errorLoadingClients': 'Error Loading Clients',
-       'deleteClients': 'Delete Clients',
-       'addNewClient': 'Add New Client',
-       'name': 'Name',
-       'pleaseEnterName': 'Please enter a name',
-       'pleaseEnterPhoneNumber': 'Please enter a phone number',
-       'pleaseEnterAddress': 'Please enter an address',
-       'collect': 'Collect',
-       'close': 'Close',
-       'vendorInformation': 'Vendor Information',
-       'phone': 'Phone',
-       'financialSummary': 'Financial Summary',
-       'totalPurchase': 'Total Purchase',
-       'totalSale': 'Total Sale',
-       'pieces': 'Pieces',
-       'purchase': 'Purchase',
-       'sale': 'Sale',
-       'signInToContinue': 'Sign in to continue to your account',
-       'pleaseEnterEmail': 'Please enter your email',
-       'pleaseEnterValidEmail': 'Please enter a valid email',
-       'pleaseEnterPassword': 'Please enter your password',
-       'or': 'OR',
-       'debugAuth': 'Debug Auth',
-       'createAccount': 'Create Account',
-       'pleaseFillDetails': 'Please fill in the details below to create your account',
-       'fullName': 'Full Name',
-       'pleaseEnterFullName': 'Please enter your full name',
-       'pleaseConfirmPassword': 'Please confirm your password',
-             'passwordsDoNotMatch': 'Passwords do not match',
+      'language': 'Language',
+      'englishLanguage': 'English',
+      'arabicLanguage': 'العربية',
+      'tryAdjustingSearchTerms': 'Try adjusting your search terms',
+      'vendorsWillAppearHere': 'Vendors will appear here once orders are added',
+      'resultsFound': 'results found',
+      'resultFound': 'result found',
+      'errorLoadingVendors': 'Error Loading Vendors',
+      'retry': 'Retry',
+      'ordersHistory': 'Orders History',
+      'clientsDeletedSuccessfully': 'Clients deleted successfully',
+      'addYourFirstClient': 'Add your first client to get started',
+      'errorLoadingClients': 'Error Loading Clients',
+      'deleteClients': 'Delete Clients',
+      'addNewClient': 'Add New Client',
+      'name': 'Name',
+      'pleaseEnterName': 'Please enter a name',
+      'pleaseEnterPhoneNumber': 'Please enter a phone number',
+      'pleaseEnterAddress': 'Please enter an address',
+      'collect': 'Collect',
+      'close': 'Close',
+      'vendorInformation': 'Vendor Information',
+      'phone': 'Phone',
+      'financialSummary': 'Financial Summary',
+      'totalPurchase': 'Total Purchase',
+      'totalSale': 'Total Sale',
+      'pieces': 'Pieces',
+      'purchase': 'Purchase',
+      'sale': 'Sale',
+      'signInToContinue': 'Sign in to continue to your account',
+      'pleaseEnterEmail': 'Please enter your email',
+      'pleaseEnterValidEmail': 'Please enter a valid email',
+      'pleaseEnterPassword': 'Please enter your password',
+      'or': 'OR',
+      'debugAuth': 'Debug Auth',
+      'createAccount': 'Create Account',
+      'pleaseFillDetails':
+          'Please fill in the details below to create your account',
+      'fullName': 'Full Name',
+      'pleaseEnterFullName': 'Please enter your full name',
+      'pleaseConfirmPassword': 'Please confirm your password',
+      'passwordsDoNotMatch': 'Passwords do not match',
       'signIn': 'Sign In',
       'dateRangeFilter': 'Date Range Filter',
       'selectRange': 'Select Range',
@@ -384,6 +529,7 @@ class AppStrings {
       'pleaseEnterVendorName': 'Please enter vendor name',
       'pleaseEnterVendorPhone': 'Please enter vendor phone',
       'pleaseEnterChargeAmount': 'Please enter charge amount',
+      'EGP': 'EGP',
       'pleaseEnterValidNumber': 'Please enter a valid number',
       'clientsSectionTitle': 'Clients',
       'noClientsAddedYet': 'No clients added yet',
@@ -394,25 +540,86 @@ class AppStrings {
       'great': 'Great',
       'yourChangesUpdated': 'Your changes updated',
       'orderCreatedSuccessfully': 'Order created successfully!',
+      'orderCompleted': 'Order Completed!',
       'addClientDialog': 'Add Client',
       'editClientDialog': 'Edit Client',
       'pleaseEnterPhone': 'Please enter phone',
-      'pleaseEnterPiecesNumber': 'Please enter pieces number',
+      'pleaseEnterPieces': 'Please enter pieces',
       'pleaseEnterPurchasePrice': 'Please enter purchase price',
       'pleaseEnterSalePrice': 'Please enter sale price',
+      'pleaseEnterDeposit': 'Please enter deposit',
       'clientOrders': 'Orders',
       'loadingOrders': 'Loading orders...',
       'clientHasntPlacedOrders': 'hasn\'t placed any orders yet',
       'errorLoadingOrdersTitle': 'Error Loading Orders',
       'status': 'Status',
       'notReceived': 'Not Received',
-      'paymentDetails':'Payment Details',
-      'remaining':'Remaining'
+      'paymentDetails': 'Payment Details',
+      'remaining': 'Remaining',
+      'plansPricing': 'Plans & Pricing',
+      'monthlyPlan': 'Monthly Plan',
+      'yearlyPlan': 'Yearly Plan',
+      'proPlan': 'Pro Plan',
+      'lifetime': 'lifetime',
+      'choosePlan': 'Choose Plan',
+      'bestValue': 'BEST VALUE',
+      'paymentMethods': 'Payment Methods',
+      'vodafoneCash': 'Vodafone Cash',
+      'instapay': 'Instapay',
+      'copiedToClipboard': 'Number copied to clipboard',
+      'payForPlan': 'Pay for',
+      'followSteps': 'Please follow these steps:',
+      'transferAmount':
+          '1. Transfer the amount via Vodafone Cash to 01091712619 or Instapay to 01020074013.',
+      'takeScreenshot': '2. Take a screenshot of the transaction.',
+      'sendWhatsAppActivation':
+          '3. Send the screenshot to our WhatsApp to activate your account.',
+      'sendToWhatsApp': 'Send to WhatsApp',
+      'unlimitedOrders': 'Unlimited Orders',
+      'fullAnalytics': 'Full Analytics',
+      'support247': 'Support 24/7',
+      'customBranding': 'Custom Branding',
+      'noMonthlyFees': 'No Monthly Fees',
+      'freeTrialActive': 'Free Trial Active',
+      'exploreFeaturesFree':
+          'Explore all features for free for the first 5 orders.',
+      'subscribeNow': 'Subscribe Now',
+      'chooseAnExistingClient': 'Choose an existing client',
+      'chooseAnExistingVendor': 'Choose an existing vendor',
+      'add': 'Add',
+      'freePlanLimitReached':
+          'You have reached the free plan limit of 5 orders. Please subscribe to continue.',
+      'subscriptionRequired': 'Subscription Required',
+      'sendMessageToClient': 'Send Message to Client',
+      'enterMessage': 'Enter your message',
+      'whatsappMessageTo': 'WhatsApp Message to',
+      'orderMessageTemplate':
+          'Your order exists. Your account is: {sales} - {deposit} = {result}',
+      'selectPlan': 'Select Plan',
+      'haveAProblem': 'Have a problem with:',
     },
     'ar': {
-      'paymentDetails':'نفاصيل الدفع',
-      'remaining':'اللي باقي',
-      'appName': 'كل ما تحتاجه',
+      'off50': 'خصم 50%',
+      'save200EGPComparedToMonthly': 'وفر 200 جنيه مصري مقارنة بالشهر',
+      'haveAProblem': 'مشكلتي مع :',
+      'help': 'مساعدة',
+      'selectPlan': 'اختر خطة',
+      'cloudSync': 'مزامنة سحابية',
+      'businessInsights': 'رؤى الأعمال',
+      'prioritySupport': 'دعم أولوية',
+      'cloudSyncDescription': 'بياناتك آمنة ومزامنة عبر الأجهزة.',
+      'businessInsightsDescription': 'تتبع أدائك مع الرسوم البيانية الجميلة.',
+      'prioritySupportDescription':
+          'احصل على المساعدة من فريقنا كلما احتجت إليها.',
+      'WhyPremium': 'لماذا بريميوم؟',
+      'freeTrialActive': 'تم تفعيل التجربة المجانية',
+      'importFromContacts': 'استيراد من جهات الاتصال',
+      'lightMode': 'الوضع النهاري',
+      'darkMode': 'الوضع الليلي',
+      'logout': 'تسجيل الخروج',
+      'paymentDetails': 'نفاصيل الدفع',
+      'remaining': 'اللي باقي',
+      'appName': 'إدارة الطلبات',
       'login': 'تسجيل الدخول',
       'signUp': 'إنشاء حساب',
       'email': 'البريد الإلكتروني',
@@ -476,9 +683,9 @@ class AppStrings {
       'manageBusinessEfficiently': 'إدارة عملك بكفاءة',
       'welcomeBack': 'مرحباً بعودتك!',
       'readyToManageOrders': 'مستعد لإدارة طلباتك وتنمية عملك؟',
-             'totalOrders': 'إجمالي الطلبات',
-       'activeClients': 'العملاء النشطين',
-       'quickActions': 'الإجراءات السريعة',
+      'totalOrders': 'إجمالي الطلبات',
+      'activeClients': 'العملاء النشطين',
+      'quickActions': 'الإجراءات السريعة',
       'collectOrder': 'جمع الطلب',
       'createNewOrders': 'إنشاء طلبات جديدة',
       'viewAllOrders': 'عرض جميع الطلبات',
@@ -488,47 +695,47 @@ class AppStrings {
       'analytics': 'التحليلات',
       'viewReports': 'عرض التقارير',
       'analyticsComingSoon': 'ميزة التحليلات قادمة قريباً!',
-             'language': 'اللغة',
-       'englishLanguage': 'English',
-       'arabicLanguage': 'العربية',
-       'tryAdjustingSearchTerms': 'حاول تعديل مصطلحات البحث',
-       'vendorsWillAppearHere': 'سيظهر الموردون هنا بمجرد إضافة الطلبات',
-       'resultsFound': 'نتيجة وجدت',
-       'resultFound': 'نتيجة وجدت',
-       'errorLoadingVendors': 'خطأ في تحميل الموردين',
-       'retry': 'إعادة المحاولة',
-       'ordersHistory': 'تاريخ الطلبات',
-       'clientsDeletedSuccessfully': 'تم حذف العملاء بنجاح',
-       'addYourFirstClient': 'أضف عميلك الأول للبدء',
-       'errorLoadingClients': 'خطأ في تحميل العملاء',
-       'deleteClients': 'حذف العملاء',
-       'addNewClient': 'إضافة عميل جديد',
-       'name': 'الاسم',
-       'pleaseEnterName': 'يرجى إدخال اسم',
-       'pleaseEnterPhoneNumber': 'يرجى إدخال رقم هاتف',
-       'pleaseEnterAddress': 'يرجى إدخال عنوان',
-       'collect': 'جمع',
-       'close': 'إغلاق',
-       'vendorInformation': 'معلومات المورد',
-       'phone': 'الهاتف',
-       'financialSummary': 'الملخص المالي',
-       'totalPurchase': 'إجمالي الشراء',
-       'totalSale': 'إجمالي البيع',
-       'pieces': 'القطع',
-       'purchase': 'الشراء',
-       'sale': 'البيع',
-       'signInToContinue': 'تسجيل الدخول للاستمرار في حسابك',
-       'pleaseEnterEmail': 'يرجى إدخال بريدك الإلكتروني',
-       'pleaseEnterValidEmail': 'يرجى إدخال بريد إلكتروني صحيح',
-       'pleaseEnterPassword': 'يرجى إدخال كلمة المرور',
-       'or': 'أو',
-       'debugAuth': 'تصحيح المصادقة',
-       'createAccount': 'إنشاء حساب',
-       'pleaseFillDetails': 'يرجى ملء التفاصيل أدناه لإنشاء حسابك',
-       'fullName': 'الاسم الكامل',
-       'pleaseEnterFullName': 'يرجى إدخال اسمك الكامل',
-       'pleaseConfirmPassword': 'يرجى تأكيد كلمة المرور',
-             'passwordsDoNotMatch': 'كلمات المرور غير متطابقة',
+      'language': 'اللغة',
+      'englishLanguage': 'English',
+      'arabicLanguage': 'العربية',
+      'tryAdjustingSearchTerms': 'حاول تعديل مصطلحات البحث',
+      'vendorsWillAppearHere': 'سيظهر الموردون هنا بمجرد إضافة الطلبات',
+      'resultsFound': 'نتيجة وجدت',
+      'resultFound': 'نتيجة وجدت',
+      'errorLoadingVendors': 'خطأ في تحميل الموردين',
+      'retry': 'إعادة المحاولة',
+      'ordersHistory': 'تاريخ الطلبات',
+      'clientsDeletedSuccessfully': 'تم حذف العملاء بنجاح',
+      'addYourFirstClient': 'أضف عميلك الأول للبدء',
+      'errorLoadingClients': 'خطأ في تحميل العملاء',
+      'deleteClients': 'حذف العملاء',
+      'addNewClient': 'إضافة عميل جديد',
+      'name': 'الاسم',
+      'pleaseEnterName': 'يرجى إدخال اسم',
+      'pleaseEnterPhoneNumber': 'يرجى إدخال رقم هاتف',
+      'pleaseEnterAddress': 'يرجى إدخال عنوان',
+      'collect': 'جمع',
+      'close': 'إغلاق',
+      'vendorInformation': 'معلومات المورد',
+      'phone': 'الهاتف',
+      'financialSummary': 'الملخص المالي',
+      'totalPurchase': 'إجمالي الشراء',
+      'totalSale': 'إجمالي البيع',
+      'pieces': 'القطع',
+      'purchase': 'الشراء',
+      'sale': 'البيع',
+      'signInToContinue': 'تسجيل الدخول للاستمرار في حسابك',
+      'pleaseEnterEmail': 'يرجى إدخال بريدك الإلكتروني',
+      'pleaseEnterValidEmail': 'يرجى إدخال بريد إلكتروني صحيح',
+      'pleaseEnterPassword': 'يرجى إدخال كلمة المرور',
+      'or': 'أو',
+      'debugAuth': 'تصحيح المصادقة',
+      'createAccount': 'إنشاء حساب',
+      'pleaseFillDetails': 'يرجى ملء التفاصيل أدناه لإنشاء حسابك',
+      'fullName': 'الاسم الكامل',
+      'pleaseEnterFullName': 'يرجى إدخال اسمك الكامل',
+      'pleaseConfirmPassword': 'يرجى تأكيد كلمة المرور',
+      'passwordsDoNotMatch': 'كلمات المرور غير متطابقة',
       'signIn': 'تسجيل الدخول',
       'dateRangeFilter': 'فلتر نطاق التاريخ',
       'selectRange': 'اختر النطاق',
@@ -567,6 +774,7 @@ class AppStrings {
       'pleaseEnterVendorName': 'يرجى إدخال اسم المورد',
       'pleaseEnterVendorPhone': 'يرجى إدخال هاتف المورد',
       'pleaseEnterChargeAmount': 'يرجى إدخال مبلغ العمولة',
+      'EGP': 'جنيه مصري',
       'pleaseEnterValidNumber': 'يرجى إدخال رقم صحيح',
       'clientsSectionTitle': 'العملاء',
       'noClientsAddedYet': 'لم يتم إضافة عملاء بعد',
@@ -577,18 +785,57 @@ class AppStrings {
       'great': 'ممتاز',
       'yourChangesUpdated': 'تم تحديث تغييراتك',
       'orderCreatedSuccessfully': 'تم إنشاء الطلب بنجاح!',
+      'orderCompleted': 'تم إكمال الطلب!',
       'addClientDialog': 'إضافة عميل',
       'editClientDialog': 'تعديل العميل',
       'pleaseEnterPhone': 'يرجى إدخال الهاتف',
-      'pleaseEnterPiecesNumber': 'يرجى إدخال عدد القطع',
+      'pleaseEnterPieces': 'يرجى إدخال عدد القطع',
       'pleaseEnterPurchasePrice': 'يرجى إدخال سعر الشراء',
       'pleaseEnterSalePrice': 'يرجى إدخال سعر البيع',
+      'pleaseEnterDeposit': 'يرجى إدخال العربون',
       'clientOrders': 'الطلبات',
       'loadingOrders': 'جاري تحميل الطلبات...',
       'clientHasntPlacedOrders': 'لم يضع أي طلبات بعد',
       'errorLoadingOrdersTitle': 'خطأ في تحميل الطلبات',
       'status': 'الحالة',
       'notReceived': 'غير مستلم',
+      'plansPricing': 'الخطط والأسعار',
+      'monthlyPlan': 'الخطة الشهرية',
+      'yearlyPlan': 'الخطة السنوية',
+      'proPlan': 'الخطة الاحترافية',
+      'lifetime': 'مدى الحياة',
+      'choosePlan': 'اختر الخطة',
+      'bestValue': 'أفضل قيمة',
+      'paymentMethods': 'طرق الدفع',
+      'vodafoneCash': 'فودافون كاش',
+      'instapay': 'إنستاباي',
+      'copiedToClipboard': 'تم نسخ الرقم',
+      'payForPlan': 'الدفع لـ',
+      'followSteps': 'يرجى اتباع الخطوات التالية:',
+      'transferAmount':
+          '1. قم بتحويل المبلغ عبر فودافون كاش إلى 01091712619 أو إنستاباي إلى 01020074013.',
+      'takeScreenshot': '2. قم بأخذ لقطة شاشة للمعاملة.',
+      'sendWhatsAppActivation':
+          '3. أرسل لقطة الشاشة إلى واتساب الخاص بنا لتفعيل حسابك.',
+      'sendToWhatsApp': 'إرسال إلى واتساب',
+      'unlimitedOrders': 'طلبات غير محدودة',
+      'fullAnalytics': 'تحليلات كاملة',
+      'support247': 'دعم 24/7',
+      'customBranding': 'هوية مخصصة',
+      'noMonthlyFees': 'بدون رسوم شهرية',
+      'exploreFeaturesFree': 'استكشف جميع الميزات مجانًا لأول 5 اوردرات.',
+      'subscribeNow': 'اشترك الآن',
+      'chooseAnExistingClient': 'اختر عميلًا حاليًا',
+      'chooseAnExistingVendor': 'اختر موردًا حاليًا',
+      'add': 'إضافة',
+      'freePlanLimitReached':
+          'لقد وصلت إلى حد الخطة المجانية وهو 5 طلبات. يرجى الاشتراك للمتابعة.',
+      'subscriptionRequired': 'الاشتراك مطلوب',
+      'sendMessageToClient': 'إرسال رسالة للعميل',
+      'enterMessage': 'أدخل رسالتك',
+      'whatsappMessageTo': 'رسالة واتساب لـ',
+      'orderMessageTemplate':
+          'طلبك موجود. حسابك هو: {sales} - {deposit} = {result}',
     },
   };
-} 
+}

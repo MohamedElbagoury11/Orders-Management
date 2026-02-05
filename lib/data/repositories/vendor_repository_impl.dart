@@ -6,7 +6,7 @@ class VendorRepositoryImpl implements VendorRepository {
   final FirestoreDataSource _firestoreDataSource;
 
   VendorRepositoryImpl({required FirestoreDataSource firestoreDataSource})
-      : _firestoreDataSource = firestoreDataSource;
+    : _firestoreDataSource = firestoreDataSource;
 
   @override
   Future<List<Vendor>> getVendors() async {
@@ -16,6 +16,17 @@ class VendorRepositoryImpl implements VendorRepository {
   @override
   Future<Vendor?> getVendor(String id) async {
     return await _firestoreDataSource.getVendor(id);
+  }
+
+  @override
+  Future<Vendor?> getVendorByNameAndPhone(
+    String name,
+    String phoneNumber,
+  ) async {
+    return await _firestoreDataSource.getVendorByNameAndPhone(
+      name,
+      phoneNumber,
+    );
   }
 
   @override
@@ -30,11 +41,13 @@ class VendorRepositoryImpl implements VendorRepository {
   }
 
   @override
-  Future<Vendor> updateVendor(String id, {
+  Future<Vendor> updateVendor(
+    String id, {
     String? name,
     String? phoneNumber,
   }) async {
-    return await _firestoreDataSource.updateVendor(id,
+    return await _firestoreDataSource.updateVendor(
+      id,
       name: name,
       phoneNumber: phoneNumber,
     );
@@ -44,4 +57,4 @@ class VendorRepositoryImpl implements VendorRepository {
   Future<void> deleteVendor(String id) async {
     return await _firestoreDataSource.deleteVendor(id);
   }
-} 
+}

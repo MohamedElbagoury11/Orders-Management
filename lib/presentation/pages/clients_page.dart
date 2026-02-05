@@ -45,8 +45,10 @@ class _ClientsPageState extends State<ClientsPage> {
       });
     } else {
       setState(() {
-        _filteredClients = _allClients.where((client) =>
-            client.name.toLowerCase().contains(query)).toList();
+        _filteredClients =
+            _allClients
+                .where((client) => client.name.toLowerCase().contains(query))
+                .toList();
       });
     }
   }
@@ -74,37 +76,38 @@ class _ClientsPageState extends State<ClientsPage> {
                   decoration: InputDecoration(
                     hintText: AppStrings.searchClients,
                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              _searchController.clear();
-                            },
-                          )
-                        : null,
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.grey),
+                              onPressed: () {
+                                _searchController.clear();
+                              },
+                            )
+                            : null,
                   ),
                 ),
               ),
-              
+
               // Results count
               if (_searchController.text.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       Icon(Icons.search, size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Text(
                         '${_filteredClients.length} ${_filteredClients.length == 1 ? AppStrings.resultFound : AppStrings.resultsFound}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   ),
                 ),
-              
+
               // Clients List
               Expanded(
                 child: BlocListener<ClientBloc, ClientState>(
@@ -119,7 +122,9 @@ class _ClientsPageState extends State<ClientsPage> {
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Client ${state.client.name} created successfully'),
+                          content: Text(
+                            'Client ${state.client.name} created successfully',
+                          ),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -129,7 +134,9 @@ class _ClientsPageState extends State<ClientsPage> {
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Client ${state.client.name} updated successfully'),
+                          content: Text(
+                            'Client ${state.client.name} updated successfully',
+                          ),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -146,8 +153,14 @@ class _ClientsPageState extends State<ClientsPage> {
                     } else if (state is ClientsLoaded) {
                       setState(() {
                         _isDeleting = false;
-                        _allClients = state.clients;
-                        _filteredClients = state.clients;
+                        // Deduplicate by name and phone for display
+                        final Map<String, Client> uniqueClients = {};
+                        for (var client in state.clients) {
+                          final key = '${client.name}_${client.phoneNumber}';
+                          uniqueClients.putIfAbsent(key, () => client);
+                        }
+                        _allClients = uniqueClients.values.toList();
+                        _filteredClients = _allClients;
                       });
                     } else if (state is ClientError) {
                       setState(() {
@@ -169,12 +182,17 @@ class _ClientsPageState extends State<ClientsPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 'Loading clients...',
-                                style: TextStyle(fontSize: 16, color: Colors.grey),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
@@ -184,14 +202,18 @@ class _ClientsPageState extends State<ClientsPage> {
                           return Center(
                             child: Container(
                               padding: AppThemeHelper.getCardPadding(context),
-                              decoration: AppThemeHelper.getCardDecoration(context),
-                              margin: AppThemeHelper.getStandardPadding(context),
+                              decoration: AppThemeHelper.getCardDecoration(
+                                context,
+                              ),
+                              margin: AppThemeHelper.getStandardPadding(
+                                context,
+                              ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    _searchController.text.isNotEmpty 
-                                        ? Icons.search_off 
+                                    _searchController.text.isNotEmpty
+                                        ? Icons.search_off
                                         : Icons.people_outline,
                                     size: 80,
                                     color: Colors.grey[400],
@@ -201,7 +223,9 @@ class _ClientsPageState extends State<ClientsPage> {
                                     _searchController.text.isNotEmpty
                                         ? AppStrings.noClientsFound
                                         : AppStrings.noClientsFound,
-                                    style: AppThemeHelper.getHeadlineStyle(context),
+                                    style: AppThemeHelper.getHeadlineStyle(
+                                      context,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -216,7 +240,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             ),
                           );
                         }
-                        
+
                         return ListView.builder(
                           padding: AppThemeHelper.getStandardPadding(context),
                           itemCount: _filteredClients.length,
@@ -224,7 +248,9 @@ class _ClientsPageState extends State<ClientsPage> {
                             final client = _filteredClients[index];
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
-                              decoration: AppThemeHelper.getCardDecoration(context),
+                              decoration: AppThemeHelper.getCardDecoration(
+                                context,
+                              ),
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
@@ -233,12 +259,17 @@ class _ClientsPageState extends State<ClientsPage> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ClientOrdersPage(client: client),
+                                        builder:
+                                            (context) => ClientOrdersPage(
+                                              client: client,
+                                            ),
                                       ),
                                     );
                                   },
                                   child: Padding(
-                                    padding: AppThemeHelper.getCardPadding(context),
+                                    padding: AppThemeHelper.getCardPadding(
+                                      context,
+                                    ),
                                     child: Row(
                                       children: [
                                         // Avatar
@@ -246,12 +277,19 @@ class _ClientsPageState extends State<ClientsPage> {
                                           width: 50,
                                           height: 50,
                                           decoration: BoxDecoration(
-                                            gradient: AppThemeHelper.getCustomTheme(context).primaryGradient,
-                                            borderRadius: BorderRadius.circular(25),
+                                            gradient:
+                                                AppThemeHelper.getCustomTheme(
+                                                  context,
+                                                ).primaryGradient,
+                                            borderRadius: BorderRadius.circular(
+                                              25,
+                                            ),
                                           ),
                                           child: Center(
                                             child: Text(
-                                              client.name.isNotEmpty ? client.name[0].toUpperCase() : '?',
+                                              client.name.isNotEmpty
+                                                  ? client.name[0].toUpperCase()
+                                                  : '?',
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 20,
@@ -263,16 +301,23 @@ class _ClientsPageState extends State<ClientsPage> {
                                         const SizedBox(width: 16),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 client.name,
-                                                style: AppThemeHelper.getTitleStyle(context),
+                                                style:
+                                                    AppThemeHelper.getTitleStyle(
+                                                      context,
+                                                    ),
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
                                                 client.phoneNumber,
-                                                style: AppThemeHelper.getBodyStyle(context),
+                                                style:
+                                                    AppThemeHelper.getBodyStyle(
+                                                      context,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -294,7 +339,9 @@ class _ClientsPageState extends State<ClientsPage> {
                         return Center(
                           child: Container(
                             padding: AppThemeHelper.getCardPadding(context),
-                            decoration: AppThemeHelper.getCardDecoration(context),
+                            decoration: AppThemeHelper.getCardDecoration(
+                              context,
+                            ),
                             margin: AppThemeHelper.getStandardPadding(context),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -307,7 +354,9 @@ class _ClientsPageState extends State<ClientsPage> {
                                 const SizedBox(height: 16),
                                 Text(
                                   AppStrings.errorLoadingClients,
-                                  style: AppThemeHelper.getHeadlineStyle(context),
+                                  style: AppThemeHelper.getHeadlineStyle(
+                                    context,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -318,7 +367,9 @@ class _ClientsPageState extends State<ClientsPage> {
                                 const SizedBox(height: 24),
                                 ElevatedButton.icon(
                                   onPressed: () {
-                                    context.read<ClientBloc>().add(LoadClients());
+                                    context.read<ClientBloc>().add(
+                                      LoadClients(),
+                                    );
                                   },
                                   icon: const Icon(Icons.refresh),
                                   label: Text(AppStrings.retry),
@@ -328,7 +379,7 @@ class _ClientsPageState extends State<ClientsPage> {
                           ),
                         );
                       }
-                      
+
                       return const SizedBox.shrink();
                     },
                   ),
@@ -343,24 +394,38 @@ class _ClientsPageState extends State<ClientsPage> {
               return BlocBuilder<OrderBloc, OrderState>(
                 builder: (context, orderState) {
                   if (orderState is OrdersLoaded) {
-                    final clientsToDelete = _getClientsWithAllOrdersReceived(_allClients, orderState.orders);
+                    final clientsToDelete = _getClientsWithAllOrdersReceived(
+                      _allClients,
+                      orderState.orders,
+                    );
                     if (clientsToDelete.isNotEmpty) {
                       return FloatingActionButton.extended(
                         heroTag: "delete_clients_button",
-                        onPressed: _isDeleting ? null : () => _showDeleteConfirmation(clientsToDelete),
+                        onPressed:
+                            _isDeleting
+                                ? null
+                                : () =>
+                                    _showDeleteConfirmation(clientsToDelete),
                         backgroundColor: _isDeleting ? Colors.grey : Colors.red,
                         foregroundColor: Colors.white,
-                        icon: _isDeleting 
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Icon(Icons.delete_sweep),
-                        label: Text(_isDeleting ? 'Deleting...' : '${AppStrings.delete} ${clientsToDelete.length}'),
+                        icon:
+                            _isDeleting
+                                ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                                : const Icon(Icons.delete_sweep),
+                        label: Text(
+                          _isDeleting
+                              ? 'Deleting...'
+                              : '${AppStrings.delete} ${clientsToDelete.length}',
+                        ),
                       );
                     }
                   }
@@ -377,23 +442,27 @@ class _ClientsPageState extends State<ClientsPage> {
     );
   }
 
-  List<Client> _getClientsWithAllOrdersReceived(List<Client> clients, List<Order> orders) {
-    return clients.where((client) {
-      // Find all orders that include this client by name and phone number
-      final clientOrders = orders.where((order) =>
-        order.clients.any((orderClient) => 
-          orderClient.name == client.name && 
-          orderClient.phoneNumber == client.phoneNumber
-        )
-      );
-      // For each order, check if this client's isReceived is true
-      return clientOrders.isNotEmpty && clientOrders.every((order) {
-        final orderClient = order.clients.firstWhere(
-          (c) => c.name == client.name && c.phoneNumber == client.phoneNumber,
-          orElse: () => throw Exception('Client not found in order')
-        );
-        return orderClient.isReceived;
-      });
+  List<Client> _getClientsWithAllOrdersReceived(
+    List<Client> clients,
+    List<Order> orders,
+  ) {
+    // Optimized lookup: Pre-calculate status for all clients across all orders
+    final clientStatusMap = <String, bool>{}; // key -> all_received so far
+    final clientHasOrders = <String, bool>{}; // key -> has at least one order
+
+    for (final order in orders) {
+      for (final oc in order.clients) {
+        final key = '${oc.name}_${oc.phoneNumber}';
+        clientHasOrders[key] = true;
+
+        final currentAllReceived = clientStatusMap[key] ?? true;
+        clientStatusMap[key] = currentAllReceived && oc.isReceived;
+      }
+    }
+
+    return clients.where((c) {
+      final key = '${c.name}_${c.phoneNumber}';
+      return (clientHasOrders[key] ?? false) && (clientStatusMap[key] ?? false);
     }).toList();
   }
 
@@ -403,14 +472,23 @@ class _ClientsPageState extends State<ClientsPage> {
         // Only one client, simple confirmation
         final confirm = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Delete Client'),
-            content: Text('Are you sure you want to delete ${clients.first.name}?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete')),
-            ],
-          ),
+          builder:
+              (context) => AlertDialog(
+                title: Text('Delete Client'),
+                content: Text(
+                  'Are you sure you want to delete ${clients.first.name}?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text('Delete'),
+                  ),
+                ],
+              ),
         );
         if (confirm == true) {
           context.read<ClientBloc>().add(DeleteClient(clients.first.id));
@@ -422,38 +500,46 @@ class _ClientsPageState extends State<ClientsPage> {
           context: context,
           builder: (context) {
             return StatefulBuilder(
-              builder: (context, setState) => AlertDialog(
-                title: Text('Select Clients to Delete'),
-                content: SizedBox(
-                  width: double.maxFinite,
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: clients.map((client) {
-                      final isSelected = selected.contains(client);
-                      return CheckboxListTile(
-                        value: isSelected,
-                        title: Text(client.name),
-                        onChanged: (checked) {
-                          setState(() {
-                            if (checked == true) {
-                              selected.add(client);
-                            } else {
-                              selected.remove(client);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
+              builder:
+                  (context, setState) => AlertDialog(
+                    title: Text('Select Clients to Delete'),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      child: ListView(
+                        shrinkWrap: true,
+                        children:
+                            clients.map((client) {
+                              final isSelected = selected.contains(client);
+                              return CheckboxListTile(
+                                value: isSelected,
+                                title: Text(client.name),
+                                onChanged: (checked) {
+                                  setState(() {
+                                    if (checked == true) {
+                                      selected.add(client);
+                                    } else {
+                                      selected.remove(client);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed:
+                            selected.isEmpty
+                                ? null
+                                : () => Navigator.pop(context, true),
+                        child: Text('Delete'),
+                      ),
+                    ],
                   ),
-                ),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
-                  TextButton(
-                    onPressed: selected.isEmpty ? null : () => Navigator.pop(context, true),
-                    child: Text('Delete'),
-                  ),
-                ],
-              ),
             );
           },
         );
@@ -461,25 +547,43 @@ class _ClientsPageState extends State<ClientsPage> {
           // Show final confirmation
           final reallyDelete = await showDialog<bool>(
             context: context,
-            builder: (context) => AlertDialog(
-              title: Text('Confirm Delete'),
-              content: Text('Are you sure you want to delete ${selected.length} clients?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
-                TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete')),
-              ],
-            ),
+            builder:
+                (context) => AlertDialog(
+                  title: Text('Confirm Delete'),
+                  content: Text(
+                    'Are you sure you want to delete ${selected.length} clients?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text('Delete'),
+                    ),
+                  ],
+                ),
           );
           if (reallyDelete == true) {
             try {
               // Use DeleteClientsByNameAndPhone event
-              final clientMaps = selected.map((c) => <String, String>{
-                'name': c.name,
-                'phoneNumber': c.phoneNumber,
-              }).toList();
-              
-              print('Dispatching DeleteClientsByNameAndPhone with ${clientMaps.length} clients'); // Debug print
-              context.read<ClientBloc>().add(DeleteClientsByNameAndPhone(clientMaps));
+              final clientMaps =
+                  selected
+                      .map(
+                        (c) => <String, String>{
+                          'name': c.name,
+                          'phoneNumber': c.phoneNumber,
+                        },
+                      )
+                      .toList();
+
+              print(
+                'Dispatching DeleteClientsByNameAndPhone with ${clientMaps.length} clients',
+              ); // Debug print
+              context.read<ClientBloc>().add(
+                DeleteClientsByNameAndPhone(clientMaps),
+              );
             } catch (e) {
               print('Error in delete confirmation: $e'); // Debug print
               ScaffoldMessenger.of(context).showSnackBar(
@@ -502,6 +606,4 @@ class _ClientsPageState extends State<ClientsPage> {
       );
     }
   }
-
- 
-} 
+}

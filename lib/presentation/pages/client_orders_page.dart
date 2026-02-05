@@ -394,9 +394,9 @@ class _ClientOrdersPageState extends State<ClientOrdersPage> {
       children: [
         _buildDetailRow(AppStrings.pieces, '${orderInfo.client.piecesNumber}', Icons.inventory),
         const SizedBox(height: 8),
-        _buildDetailRow(AppStrings.purchase, '\$${orderInfo.client.purchasePrice}', Icons.shopping_cart),
+        _buildDetailRow(AppStrings.purchase, 'EGP ${orderInfo.client.purchasePrice}', Icons.shopping_cart),
         const SizedBox(height: 8),
-        _buildDetailRow(AppStrings.sale, '\$${orderInfo.client.salePrice}', Icons.attach_money),
+        _buildDetailRow(AppStrings.sale, 'EGP ${orderInfo.client.salePrice}', Icons.attach_money),
       ],
     );
   }
@@ -420,7 +420,7 @@ class _ClientOrdersPageState extends State<ClientOrdersPage> {
           ),
           const SizedBox(width: 4),
           Text(
-            '${AppStrings.profit}: \$${profit.toStringAsFixed(2)}',
+            '${AppStrings.profit}: EGP ${profit.toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: isTablet ? 14 : 12,
               fontWeight: FontWeight.w600,
@@ -657,16 +657,16 @@ class _ClientOrdersPageState extends State<ClientOrdersPage> {
   List<Widget> _buildFinancialSummaryItems(ClientOrderInfo orderInfo) {
     return [
       _buildDetailItem(AppStrings.pieces, '${orderInfo.client.piecesNumber}', Icons.inventory),
-      _buildDetailItem(AppStrings.purchasePrice, '\$${orderInfo.client.purchasePrice}', Icons.shopping_cart),
-      _buildDetailItem(AppStrings.salePrice, '\$${orderInfo.client.salePrice}', Icons.attach_money),
-      _buildDetailItem(AppStrings.profit, '\$${(orderInfo.client.salePrice - orderInfo.client.purchasePrice).toStringAsFixed(2)}', Icons.trending_up),
+      _buildDetailItem(AppStrings.purchasePrice, 'EGP ${orderInfo.client.purchasePrice}', Icons.shopping_cart),
+      _buildDetailItem(AppStrings.salePrice, 'EGP ${orderInfo.client.salePrice}', Icons.attach_money),
+      _buildDetailItem(AppStrings.profit, 'EGP ${(orderInfo.client.salePrice - orderInfo.client.purchasePrice).toStringAsFixed(2)}', Icons.trending_up),
     ];
   }
 
   List<Widget> _buildPaymentDetailsItems(ClientOrderInfo orderInfo) {
     return [
-      _buildDetailItem(AppStrings.deposit, '\$${orderInfo.client.deposit}', Icons.account_balance_wallet),
-      _buildDetailItem(AppStrings.remaining, '\$${(orderInfo.client.salePrice - orderInfo.client.deposit).toStringAsFixed(2)}', Icons.pending_actions),
+      _buildDetailItem(AppStrings.deposit, 'EGP ${orderInfo.client.deposit}', Icons.account_balance_wallet),
+      _buildDetailItem(AppStrings.remaining, 'EGP ${(orderInfo.client.salePrice - orderInfo.client.deposit).toStringAsFixed(2)}', Icons.pending_actions),
     ];
   }
 

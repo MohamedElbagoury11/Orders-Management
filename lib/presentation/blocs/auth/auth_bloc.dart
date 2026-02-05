@@ -14,7 +14,10 @@ class SignInWithEmailAndPasswordEvent extends AuthEvent {
   final String email;
   final String password;
 
-  SignInWithEmailAndPasswordEvent({required this.email, required this.password});
+  SignInWithEmailAndPasswordEvent({
+    required this.email,
+    required this.password,
+  });
 
   @override
   List<Object?> get props => [email, password];
@@ -26,8 +29,8 @@ class SignUpWithEmailAndPasswordEvent extends AuthEvent {
   final String name;
 
   SignUpWithEmailAndPasswordEvent({
-    required this.email, 
-    required this.password, 
+    required this.email,
+    required this.password,
     required this.name,
   });
 
@@ -40,6 +43,8 @@ class SignInWithGoogleEvent extends AuthEvent {}
 class SignOutEvent extends AuthEvent {}
 
 class CheckAuthStateEvent extends AuthEvent {}
+
+class RefreshUserEvent extends AuthEvent {}
 
 // States
 abstract class AuthState extends Equatable {
@@ -89,19 +94,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required GetCurrentUserUseCase getCurrentUser,
     required GetAuthStateChangesUseCase getAuthStateChanges,
     required SaveUserToFirestoreUseCase saveUserToFirestore,
-  })  : _signInWithEmailAndPassword = signInWithEmailAndPassword,
-        _signUpWithEmailAndPassword = signUpWithEmailAndPassword,
-        _signInWithGoogle = signInWithGoogle,
-        _signOut = signOut,
-        _getCurrentUser = getCurrentUser,
-        _getAuthStateChanges = getAuthStateChanges,
-        _saveUserToFirestore = saveUserToFirestore,
-        super(AuthInitial()) {
+  }) : _signInWithEmailAndPassword = signInWithEmailAndPassword,
+       _signUpWithEmailAndPassword = signUpWithEmailAndPassword,
+       _signInWithGoogle = signInWithGoogle,
+       _signOut = signOut,
+       _getCurrentUser = getCurrentUser,
+       _getAuthStateChanges = getAuthStateChanges,
+       _saveUserToFirestore = saveUserToFirestore,
+       super(AuthInitial()) {
     on<SignInWithEmailAndPasswordEvent>(_onSignInWithEmailAndPassword);
     on<SignUpWithEmailAndPasswordEvent>(_onSignUpWithEmailAndPassword);
     on<SignInWithGoogleEvent>(_onSignInWithGoogle);
     on<SignOutEvent>(_onSignOut);
     on<CheckAuthStateEvent>(_onCheckAuthState);
+    on<RefreshUserEvent>(_onRefreshUser);
   }
 
   Future<void> _onSignInWithEmailAndPassword(
@@ -110,13 +116,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final user = await _signInWithEmailAndPassword(event.email, event.password);
+      final user = await _signInWithEmailAndPassword(
+        event.email,
+        event.password,
+      );
       if (user != null) {
-        // Try to save user to Firestore (don't fail if it doesn't work)
+        // Save/update user to Firestore to sync device data
         try {
           await _saveUserToFirestore(user);
         } catch (e) {
-          // Log error but don't fail the sign-in
           print('Failed to save user to Firestore during sign-in: $e');
         }
         emit(Authenticated(user));
@@ -130,17 +138,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         try {
           final currentUser = await _getCurrentUser();
           if (currentUser != null) {
-            print('Successfully recovered from PigeonUserDetails error in sign-in');
+            print(
+              'Successfully recovered from PigeonUserDetails error in sign-in',
+            );
             try {
               await _saveUserToFirestore(currentUser);
             } catch (firestoreError) {
-              print('Failed to save user to Firestore after PigeonUserDetails recovery in sign-in: $firestoreError');
+              print(
+                'Failed to save user to Firestore after PigeonUserDetails recovery in sign-in: $firestoreError',
+              );
             }
             emit(Authenticated(currentUser));
             return;
           }
         } catch (recoveryError) {
-          print('Failed to recover from PigeonUserDetails error in sign-in: $recoveryError');
+          print(
+            'Failed to recover from PigeonUserDetails error in sign-in: $recoveryError',
+          );
         }
       }
       emit(AuthError(e.toString()));
@@ -153,7 +167,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final user = await _signUpWithEmailAndPassword(event.email, event.password, event.name);
+      final user = await _signUpWithEmailAndPassword(
+        event.email,
+        event.password,
+        event.name,
+      );
       if (user != null) {
         // Save user to Firestore
         try {
@@ -173,7 +191,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         try {
           final currentUser = await _getCurrentUser();
           if (currentUser != null) {
-            print('Successfully recovered from PigeonUserDetails error in sign-up');
+            print(
+              'Successfully recovered from PigeonUserDetails error in sign-up',
+            );
             // Create a new user with the provided name
             final newUser = User(
               id: currentUser.id,
@@ -185,13 +205,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             try {
               await _saveUserToFirestore(newUser);
             } catch (firestoreError) {
-              print('Failed to save user to Firestore after PigeonUserDetails recovery in sign-up: $firestoreError');
+              print(
+                'Failed to save user to Firestore after PigeonUserDetails recovery in sign-up: $firestoreError',
+              );
             }
             emit(Authenticated(newUser));
             return;
           }
         } catch (recoveryError) {
-          print('Failed to recover from PigeonUserDetails error in sign-up: $recoveryError');
+          print(
+            'Failed to recover from PigeonUserDetails error in sign-up: $recoveryError',
+          );
         }
       }
       emit(AuthError(e.toString()));
@@ -230,29 +254,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             try {
               await _saveUserToFirestore(currentUser);
             } catch (firestoreError) {
-              print('Failed to save user to Firestore after PigeonUserDetails recovery: $firestoreError');
+              print(
+                'Failed to save user to Firestore after PigeonUserDetails recovery: $firestoreError',
+              );
             }
             emit(Authenticated(currentUser));
             return;
           }
         } catch (recoveryError) {
-          print('Failed to recover from PigeonUserDetails error: $recoveryError');
+          print(
+            'Failed to recover from PigeonUserDetails error: $recoveryError',
+          );
         }
       }
       emit(AuthError(e.toString()));
     }
   }
 
-  Future<void> _onSignOut(
-    SignOutEvent event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onSignOut(SignOutEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
       await _signOut();
       emit(Unauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
+    }
+  }
+
+  Future<void> _onRefreshUser(
+    RefreshUserEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final user = await _getCurrentUser();
+      if (user != null) {
+        emit(Authenticated(user));
+      } else {
+        emit(Unauthenticated());
+      }
+    } catch (e) {
+      // Silently fail - don't disrupt user experience
+      print('Error refreshing user: $e');
     }
   }
 
@@ -282,4 +324,4 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
   }
-} 
+}
