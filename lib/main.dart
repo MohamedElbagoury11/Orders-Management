@@ -39,6 +39,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import './firebase_options.dart';
 import 'core/constants/app_strings.dart';
+import 'core/services/cache_service.dart';
 import 'core/theme_notifier.dart';
 import 'data/datasources/firebase_auth_datasource.dart';
 import 'data/datasources/firestore_datasource.dart';
@@ -67,6 +68,10 @@ final languageNotifier = LanguageNotifier();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize cache service FIRST
+  await CacheService.init();
+  print('✅ Cache service initialized');
 
   // Initialize SharedPreferences
   await SharedPreferences.getInstance();

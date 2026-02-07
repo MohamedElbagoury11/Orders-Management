@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config/cache_config.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/services/cache_service.dart';
 import '../../core/theme/app_theme_helper.dart';
 import '../../domain/entities/client.dart';
 import '../../domain/entities/order.dart'; // Added import for Order
@@ -53,6 +55,17 @@ class _ClientsPageState extends State<ClientsPage> {
     }
   }
 
+  Future<void> _refreshData() async {
+    // Clear cache and reload
+    await CacheService.clearCache(CacheConfig.clientsCacheKey);
+    print('🔄 Refreshing clients data...');
+
+    if (mounted) {
+      context.read<ClientBloc>().add(LoadClients());
+      context.read<OrderBloc>().add(LoadOrders());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AuthWrapper(
@@ -61,6 +74,13 @@ class _ClientsPageState extends State<ClientsPage> {
           title: Text(AppStrings.clients),
           elevation: 0,
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh data',
+              onPressed: _refreshData,
+            ),
+          ],
         ),
         body: Container(
           decoration: AppThemeHelper.getBackgroundGradientDecoration(context),
@@ -110,95 +130,238 @@ class _ClientsPageState extends State<ClientsPage> {
 
               // Clients List
               Expanded(
-                child: BlocListener<ClientBloc, ClientState>(
-                  listener: (context, state) {
-                    if (state is ClientLoading) {
-                      setState(() {
-                        _isDeleting = true;
-                      });
-                    } else if (state is ClientCreated) {
-                      setState(() {
-                        _isDeleting = false;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Client ${state.client.name} created successfully',
-                          ),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else if (state is ClientUpdated) {
-                      setState(() {
-                        _isDeleting = false;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Client ${state.client.name} updated successfully',
-                          ),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else if (state is ClientDeleted) {
-                      setState(() {
-                        _isDeleting = false;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppStrings.clientsDeletedSuccessfully),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else if (state is ClientsLoaded) {
-                      setState(() {
-                        _isDeleting = false;
-                        // Deduplicate by name and phone for display
-                        final Map<String, Client> uniqueClients = {};
-                        for (var client in state.clients) {
-                          final key = '${client.name}_${client.phoneNumber}';
-                          uniqueClients.putIfAbsent(key, () => client);
-                        }
-                        _allClients = uniqueClients.values.toList();
-                        _filteredClients = _allClients;
-                      });
-                    } else if (state is ClientError) {
-                      setState(() {
-                        _isDeleting = false;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: ${state.message}'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: BlocBuilder<ClientBloc, ClientState>(
-                    builder: (context, state) {
+                child: RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: BlocListener<ClientBloc, ClientState>(
+                    listener: (context, state) {
                       if (state is ClientLoading) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Loading clients...',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                        setState(() {
+                          _isDeleting = true;
+                        });
+                      } else if (state is ClientCreated) {
+                        setState(() {
+                          _isDeleting = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Client ${state.client.name} created successfully',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else if (state is ClientUpdated) {
+                        setState(() {
+                          _isDeleting = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Client ${state.client.name} updated successfully',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else if (state is ClientDeleted) {
+                        setState(() {
+                          _isDeleting = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppStrings.clientsDeletedSuccessfully,
+                            ),
+                            backgroundColor: Colors.green,
                           ),
                         );
                       } else if (state is ClientsLoaded) {
-                        if (_filteredClients.isEmpty) {
+                        setState(() {
+                          _isDeleting = false;
+                          // Deduplicate by name and phone for display
+                          final Map<String, Client> uniqueClients = {};
+                          for (var client in state.clients) {
+                            final key = '${client.name}_${client.phoneNumber}';
+                            uniqueClients.putIfAbsent(key, () => client);
+                          }
+                          _allClients = uniqueClients.values.toList();
+                          _filteredClients = _allClients;
+                        });
+                      } else if (state is ClientError) {
+                        setState(() {
+                          _isDeleting = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: ${state.message}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    child: BlocBuilder<ClientBloc, ClientState>(
+                      builder: (context, state) {
+                        if (state is ClientLoading) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Loading clients...',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else if (state is ClientsLoaded) {
+                          if (_filteredClients.isEmpty) {
+                            return Center(
+                              child: Container(
+                                padding: AppThemeHelper.getCardPadding(context),
+                                decoration: AppThemeHelper.getCardDecoration(
+                                  context,
+                                ),
+                                margin: AppThemeHelper.getStandardPadding(
+                                  context,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _searchController.text.isNotEmpty
+                                          ? Icons.search_off
+                                          : Icons.people_outline,
+                                      size: 80,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      _searchController.text.isNotEmpty
+                                          ? AppStrings.noClientsFound
+                                          : AppStrings.noClientsFound,
+                                      style: AppThemeHelper.getHeadlineStyle(
+                                        context,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _searchController.text.isNotEmpty
+                                          ? AppStrings.tryAdjustingSearchTerms
+                                          : AppStrings.addYourFirstClient,
+                                      style: AppThemeHelper.getBodyStyle(
+                                        context,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            padding: AppThemeHelper.getStandardPadding(context),
+                            itemCount: _filteredClients.length,
+                            itemBuilder: (context, index) {
+                              final client = _filteredClients[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: AppThemeHelper.getCardDecoration(
+                                  context,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => ClientOrdersPage(
+                                                client: client,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: AppThemeHelper.getCardPadding(
+                                        context,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          // Avatar
+                                          Container(
+                                            width: 50,
+                                            height: 50,
+                                            decoration: BoxDecoration(
+                                              gradient:
+                                                  AppThemeHelper.getCustomTheme(
+                                                    context,
+                                                  ).primaryGradient,
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                client.name.isNotEmpty
+                                                    ? client.name[0]
+                                                        .toUpperCase()
+                                                    : '?',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  client.name,
+                                                  style:
+                                                      AppThemeHelper.getTitleStyle(
+                                                        context,
+                                                      ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  client.phoneNumber,
+                                                  style:
+                                                      AppThemeHelper.getBodyStyle(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.arrow_forward_ios,
+                                            color: Colors.grey[400],
+                                            size: 16,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        } else if (state is ClientError) {
                           return Center(
                             child: Container(
                               padding: AppThemeHelper.getCardPadding(context),
@@ -212,28 +375,32 @@ class _ClientsPageState extends State<ClientsPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    _searchController.text.isNotEmpty
-                                        ? Icons.search_off
-                                        : Icons.people_outline,
-                                    size: 80,
-                                    color: Colors.grey[400],
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: Colors.red,
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
-                                    _searchController.text.isNotEmpty
-                                        ? AppStrings.noClientsFound
-                                        : AppStrings.noClientsFound,
+                                    AppStrings.errorLoadingClients,
                                     style: AppThemeHelper.getHeadlineStyle(
                                       context,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    _searchController.text.isNotEmpty
-                                        ? AppStrings.tryAdjustingSearchTerms
-                                        : AppStrings.addYourFirstClient,
+                                    state.message,
                                     style: AppThemeHelper.getBodyStyle(context),
                                     textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      context.read<ClientBloc>().add(
+                                        LoadClients(),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.refresh),
+                                    label: Text(AppStrings.retry),
                                   ),
                                 ],
                               ),
@@ -241,147 +408,9 @@ class _ClientsPageState extends State<ClientsPage> {
                           );
                         }
 
-                        return ListView.builder(
-                          padding: AppThemeHelper.getStandardPadding(context),
-                          itemCount: _filteredClients.length,
-                          itemBuilder: (context, index) {
-                            final client = _filteredClients[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              decoration: AppThemeHelper.getCardDecoration(
-                                context,
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => ClientOrdersPage(
-                                              client: client,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: AppThemeHelper.getCardPadding(
-                                      context,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        // Avatar
-                                        Container(
-                                          width: 50,
-                                          height: 50,
-                                          decoration: BoxDecoration(
-                                            gradient:
-                                                AppThemeHelper.getCustomTheme(
-                                                  context,
-                                                ).primaryGradient,
-                                            borderRadius: BorderRadius.circular(
-                                              25,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              client.name.isNotEmpty
-                                                  ? client.name[0].toUpperCase()
-                                                  : '?',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                client.name,
-                                                style:
-                                                    AppThemeHelper.getTitleStyle(
-                                                      context,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                client.phoneNumber,
-                                                style:
-                                                    AppThemeHelper.getBodyStyle(
-                                                      context,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.arrow_forward_ios,
-                                          color: Colors.grey[400],
-                                          size: 16,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      } else if (state is ClientError) {
-                        return Center(
-                          child: Container(
-                            padding: AppThemeHelper.getCardPadding(context),
-                            decoration: AppThemeHelper.getCardDecoration(
-                              context,
-                            ),
-                            margin: AppThemeHelper.getStandardPadding(context),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 64,
-                                  color: Colors.red,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  AppStrings.errorLoadingClients,
-                                  style: AppThemeHelper.getHeadlineStyle(
-                                    context,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  state.message,
-                                  style: AppThemeHelper.getBodyStyle(context),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 24),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    context.read<ClientBloc>().add(
-                                      LoadClients(),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.refresh),
-                                  label: Text(AppStrings.retry),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      return const SizedBox.shrink();
-                    },
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
                 ),
               ),

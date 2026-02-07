@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/config/cache_config.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/services/cache_service.dart';
 import '../../core/theme/app_theme_helper.dart';
 import '../../domain/entities/order.dart';
 import '../blocs/order/order_bloc.dart';
@@ -52,6 +54,16 @@ class _VendorsPageState extends State<VendorsPage> {
     });
   }
 
+  Future<void> _refreshData() async {
+    // Clear cache and reload
+    await CacheService.clearCache(CacheConfig.ordersCacheKey);
+    print('🔄 Refreshing vendors data...');
+
+    if (mounted) {
+      context.read<OrderBloc>().add(LoadOrders());
+    }
+  }
+
   List<VendorInfo> _getVendorsFromOrders(List<Order> orders) {
     final Map<String, List<Order>> vendorsMap = {};
     for (final order in orders) {
@@ -74,7 +86,17 @@ class _VendorsPageState extends State<VendorsPage> {
   Widget build(BuildContext context) {
     return AuthWrapper(
       child: Scaffold(
-        appBar: AppBar(title: Text(AppStrings.vendors), elevation: 0),
+        appBar: AppBar(
+          title: Text(AppStrings.vendors),
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh data',
+              onPressed: _refreshData,
+            ),
+          ],
+        ),
         body: Container(
           decoration: AppThemeHelper.getBackgroundGradientDecoration(context),
           child: Column(
@@ -99,54 +121,59 @@ class _VendorsPageState extends State<VendorsPage> {
 
               // Vendor List
               Expanded(
-                child: BlocListener<OrderBloc, OrderState>(
-                  listener: (context, state) {
-                    if (state is OrdersLoaded) {
-                      _allVendors = _getVendorsFromOrders(state.orders);
-                      _filterVendors(); // Now safe outside build phase
-                    }
-                  },
-                  child: BlocBuilder<OrderBloc, OrderState>(
-                    builder: (context, state) {
-                      if (state is OrderLoading && _allVendors.isEmpty) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is OrdersLoaded ||
-                          _allVendors.isNotEmpty) {
-                        if (_filteredVendors.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.business_outlined,
-                                  size: 80,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  AppStrings.noVendorsFound,
-                                  style: AppThemeHelper.getHeadlineStyle(
-                                    context,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _filteredVendors.length,
-                          itemBuilder: (context, index) {
-                            final vendor = _filteredVendors[index];
-                            return _buildVendorCard(vendor);
-                          },
-                        );
-                      } else if (state is OrderError) {
-                        return Center(child: Text('Error: ${state.message}'));
+                child: RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: BlocListener<OrderBloc, OrderState>(
+                    listener: (context, state) {
+                      if (state is OrdersLoaded) {
+                        _allVendors = _getVendorsFromOrders(state.orders);
+                        _filterVendors(); // Now safe outside build phase
                       }
-                      return const SizedBox.shrink();
                     },
+                    child: BlocBuilder<OrderBloc, OrderState>(
+                      builder: (context, state) {
+                        if (state is OrderLoading && _allVendors.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (state is OrdersLoaded ||
+                            _allVendors.isNotEmpty) {
+                          if (_filteredVendors.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.business_outlined,
+                                    size: 80,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    AppStrings.noVendorsFound,
+                                    style: AppThemeHelper.getHeadlineStyle(
+                                      context,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: _filteredVendors.length,
+                            itemBuilder: (context, index) {
+                              final vendor = _filteredVendors[index];
+                              return _buildVendorCard(vendor);
+                            },
+                          );
+                        } else if (state is OrderError) {
+                          return Center(child: Text('Error: ${state.message}'));
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
                 ),
               ),

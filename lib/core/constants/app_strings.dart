@@ -8,7 +8,7 @@ class AppStrings {
 
   // App Name
   static String get appName => _getString('appName');
-
+  static String get brandIdentity => _getString('brandIdentity');
   // Authentication
   static String get WhyPremium => _getString('WhyPremium');
   static String get login => _getString('login');
@@ -338,6 +338,12 @@ class AppStrings {
   static String get addressLabel => _getString('addressLabel');
   static String get ok => _getString('ok');
   static String get haveAProblem => _getString('haveAProblem');
+  static String get exitApp => _getString('exitApp');
+  static String get exitAppMessage => _getString('exitAppMessage');
+  static String get passwordTooShort => _getString('passwordTooShort');
+  static String get switchToLightMode => _getString('switchToLightMode');
+  static String get switchToDarkMode => _getString('switchToDarkMode');
+  static String get pressBackAgainToExit => _getString('pressBackAgainToExit');
   // Language context
   static Locale? _currentLocale;
 
@@ -356,6 +362,9 @@ class AppStrings {
 
   static const Map<String, Map<String, String>> _translations = {
     'en': {
+      'brandIdentity': 'Manage Your Orders from First Vendor to Last Client',
+      'exitApp': 'Exit App',
+      'exitAppMessage': 'Are you sure you want to exit the app?',
       'off50': '50% OFF',
       'save200EGPComparedToMonthly': 'Save 200 EGP compared to monthly',
       'help': 'Help',
@@ -597,8 +606,17 @@ class AppStrings {
           'Your order exists. Your account is: {sales} - {deposit} = {result}',
       'selectPlan': 'Select Plan',
       'haveAProblem': 'Have a problem with:',
+      'passwordTooShort': 'Password must be at least 6 characters',
+      'switchToLightMode': 'Switch to Light Mode',
+      'switchToDarkMode': 'Switch to Dark Mode',
+      'pressBackAgainToExit': 'Press back again to exit',
     },
     'ar': {
+      'pressBackAgainToExit': 'اضغط مرة أخرى للخروج',
+      'exitApp': 'خروج من التطبيق',
+      'exitAppMessage': 'هل انت متاكد من خروجك من التطبيق',
+
+      'brandIdentity': 'نظم طلباتك من أول مورد لآخر عميل',
       'off50': 'خصم 50%',
       'save200EGPComparedToMonthly': 'وفر 200 جنيه مصري مقارنة بالشهر',
       'haveAProblem': 'مشكلتي مع :',
@@ -836,6 +854,9 @@ class AppStrings {
       'whatsappMessageTo': 'رسالة واتساب لـ',
       'orderMessageTemplate':
           'طلبك موجود. حسابك هو: {sales} - {deposit} = {result}',
+      'passwordTooShort': 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+      'switchToLightMode': 'التبديل للوضع النهاري',
+      'switchToDarkMode': 'التبديل للوضع الليلي',
     },
   };
 }

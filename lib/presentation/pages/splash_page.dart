@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:projectmange/core/constants/app_strings.dart';
 
 import '../../core/theme/app_theme_helper.dart';
 import '../blocs/auth/auth_bloc.dart';
@@ -16,42 +18,46 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _scaleController;
+  late AnimationController _shimmerController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _shimmerAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
+
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
+
+    _shimmerAnimation = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
 
     _fadeController.forward();
     _scaleController.forward();
-    
+    _shimmerController.repeat();
+
     // Check authentication state after animation
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -64,11 +70,14 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   void dispose() {
     _fadeController.dispose();
     _scaleController.dispose();
+    _shimmerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -90,47 +99,147 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               child: ScaleTransition(
                 scale: _scaleAnimation,
                 child: Container(
-                  padding: AppThemeHelper.getCardPadding(context),
-                  decoration: AppThemeHelper.getCardDecoration(context),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 50,
+                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.2),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // App Icon
-                      Center(
-                    child: Image.asset(
-                      'assets/icon/icon.png',
-                      height: MediaQuery.of(context).size.height * 0.2,
-                    ),
-                  ),
-                      
-                      const SizedBox(height: AppThemeHelper.standardSpacing),
-                      
-                      // App Name
-                      Text(
-                        'Project Management',
-                        style: AppThemeHelper.getHeadlineStyle(context).copyWith(
-                          fontSize: 28,
+                      // App Icon with glow effect
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 40,
+                              spreadRadius: 10,
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
+                        child: Image.asset(
+                          'assets/icon/icon.png',
+                          height: MediaQuery.of(context).size.height * 0.15,
+                        ),
                       ),
-                      
-                      const SizedBox(height: AppThemeHelper.smallSpacing),
-                      
-                      // App Description
+
+                      const SizedBox(height: 32),
+
+                      // App Name with BrandType Display Font
+                      AnimatedBuilder(
+                        animation: _shimmerAnimation,
+                        builder: (context, child) {
+                          return ShaderMask(
+                            shaderCallback: (bounds) {
+                              return LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
+                                  Theme.of(context).colorScheme.primary,
+                                ],
+                                stops: [
+                                  0.0,
+                                  _shimmerAnimation.value.clamp(0.0, 1.0),
+                                  1.0,
+                                ],
+                              ).createShader(bounds);
+                            },
+                            child: Text(
+                              'Project Management',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                                color: Colors.white,
+                                height: 1.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Elegant divider
+                      Container(
+                        width: 60,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.secondary,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // App Description with elegant font
                       Text(
-                        'Manage your business efficiently',
-                        style: AppThemeHelper.getBodyStyle(context).copyWith(
+                        AppStrings.brandIdentity,
+                        style: GoogleFonts.lato(
                           fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.5,
+                          color:
+                              isDark
+                                  ? Colors.white.withOpacity(0.8)
+                                  : Colors.black87.withOpacity(0.7),
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      
-                      const SizedBox(height: AppThemeHelper.standardSpacing),
-                      
-                      // Loading Indicator
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).colorScheme.primary,
+
+                      const SizedBox(height: 8),
+
+                      // Tagline
+                      Text(
+                        'Excellence in Every Detail',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.8),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // Loading Indicator with custom styling
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ),
                     ],
@@ -143,4 +252,4 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       ),
     );
   }
-} 
+}

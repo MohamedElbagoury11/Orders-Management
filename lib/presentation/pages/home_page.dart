@@ -31,6 +31,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  DateTime? _currentBackPressTime;
 
   @override
   void initState() {
@@ -59,56 +60,96 @@ class _HomePageState extends State<HomePage> {
               state is Authenticated &&
               SubscriptionHelper.canCreateOrder(state.user);
 
-          return Scaffold(
-            drawer: _buildDrawer(context),
-            body: Container(
-              decoration: AppThemeHelper.getBackgroundGradientDecoration(
-                context,
-              ),
-              child: IndexedStack(index: _currentIndex, children: _pages),
-            ),
-            bottomNavigationBar: _buildBottomNavigationBar(),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                if (!canCreateOrder) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Free plan limit reached. Please subscribe to add new orders.',
-                      ),
-                      backgroundColor: Colors.red,
+          return PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) async {
+              if (didPop) return;
+              final now = DateTime.now();
+              if (_currentBackPressTime == null ||
+                  now.difference(_currentBackPressTime!) >
+                      const Duration(seconds: 2)) {
+                _currentBackPressTime = now;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppStrings.pressBackAgainToExit),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+                return;
+              }
+              final bool? shouldPop = await showDialog<bool>(
+                context: context,
+                builder:
+                    (context) => AlertDialog(
+                      title: Text(AppStrings.exitApp),
+                      content: Text(AppStrings.exitAppMessage),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(AppStrings.no),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Yes'),
+                        ),
+                      ],
                     ),
-                  );
+              );
+              if (shouldPop != null && shouldPop) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: Scaffold(
+              drawer: _buildDrawer(context),
+              body: Container(
+                decoration: AppThemeHelper.getBackgroundGradientDecoration(
+                  context,
+                ),
+                child: IndexedStack(index: _currentIndex, children: _pages),
+              ),
+              bottomNavigationBar: _buildBottomNavigationBar(),
+              floatingActionButton: FloatingActionButton(
+                onPressed: () {
+                  if (!canCreateOrder) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Free plan limit reached. Please subscribe to add new orders.',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SubscriptionPage(),
+                      ),
+                    );
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SubscriptionPage(),
+                      builder: (context) => const OrderCollectionPage(),
                     ),
-                  );
-                  return;
-                }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OrderCollectionPage(),
-                  ),
-                ).then((_) {
-                  // Refresh data after adding order
-                  context.read<OrderBloc>().add(LoadOrders());
-                  context.read<ClientBloc>().add(LoadClients());
-                  context.read<VendorBloc>().add(LoadVendors());
-                  // Refresh user data to update order count in drawer
-                  context.read<AuthBloc>().add(RefreshUserEvent());
-                });
-              },
-              backgroundColor:
-                  canCreateOrder
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey,
-              child: const Icon(Icons.add_shopping_cart, color: Colors.white),
+                  ).then((_) {
+                    // Refresh data after adding order
+                    context.read<OrderBloc>().add(LoadOrders());
+                    context.read<ClientBloc>().add(LoadClients());
+                    context.read<VendorBloc>().add(LoadVendors());
+                    // Refresh user data to update order count in drawer
+                    context.read<AuthBloc>().add(RefreshUserEvent());
+                  });
+                },
+                backgroundColor:
+                    canCreateOrder
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
+                child: const Icon(Icons.add_shopping_cart, color: Colors.white),
+              ),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerDocked,
             ),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerDocked,
           );
         },
       ),
@@ -120,28 +161,13 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         children: [
           DrawerHeader(
-            decoration: AppThemeHelper.getPrimaryGradientDecoration(context),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.shopping_cart_checkout,
-                    color: Colors.white,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppStrings.appName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/icon/icon.png'),
+                fit: BoxFit.cover,
               ),
             ),
+            child: null,
           ),
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
@@ -579,7 +605,7 @@ class _DashboardView extends StatelessWidget {
                   style: AppThemeHelper.getTitleStyle(context),
                 ),
                 Text(
-                  AppStrings.manageBusinessEfficiently,
+                  AppStrings.brandIdentity,
                   style: AppThemeHelper.getBodyStyle(
                     context,
                   ).copyWith(fontSize: 12),
